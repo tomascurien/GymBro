@@ -1,0 +1,18 @@
+const jwt = require('jsonwebtoken');
+const SECRET_KEY = 'gymbro_secret_key';
+
+module.exports = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) return res.status(401).json({ message: 'Token no proporcionado.' });
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    req.user = decoded; // Guardamos datos del usuario autenticado
+    next();
+  } catch (error) {
+    return res.status(403).json({ message: 'Token inválido o expirado.' });
+  }
+};
