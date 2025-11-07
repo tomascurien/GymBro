@@ -13,13 +13,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 // POST /api/routines
 router.post("/", authMiddleware, async (req, res) => {
-  // {
-  //   title: "Mi Rutina de Pecho",
-  //   exercises: [
-  //     { exercise_id: 123, index: 0, notes: "Foco en la forma", sets: [ { reps: 10, weight_kg: 50 }, { reps: 8, weight_kg: 60 } ] },
-  //     { exercise_id: 456, index: 1, notes: "", sets: [ { reps: 12, weight_kg: 20 } ] }
-  //   ]
-  // }
+
   
   const { title, exercises } = req.body;
   const userId = req.user.id;
@@ -76,7 +70,6 @@ router.post("/", authMiddleware, async (req, res) => {
     res.status(201).json(finalRoutine);
 
   } catch (error) {
-    // Si algo falló, revertimos todo
     await t.rollback();
     console.error("Error al crear la rutina:", error);
     res.status(500).json({ message: "Error al crear la rutina." });
@@ -92,14 +85,14 @@ router.get("/user/:username", async (req, res) => {
             return res.status(404).json({ message: "Usuario no encontrado." });
         }
 
-        // Esta es una consulta compleja que trae todo
+        //consulta que trae todo
         const routines = await Routine.findAll({
             where: { user_id: user.id },
             order: [['createdAt', 'DESC']],
             include: [
                 {
                     model: RoutineExercise,
-                    as: 'RoutineExercises', // Asegúrate de que tu asociación tenga un 'as' o quita esto
+                    as: 'RoutineExercises',
                     order: [['index', 'ASC']],
                     include: [
                         {
@@ -108,7 +101,7 @@ router.get("/user/:username", async (req, res) => {
                         },
                         {
                             model: Exercise,
-                            include: [ ExerciseImage ] // Incluye el ejercicio (y su imagen)
+                            include: [ ExerciseImage ] // Incluye el ejercicio y su imagen
                         }
                     ]
                 }
@@ -123,5 +116,27 @@ router.get("/user/:username", async (req, res) => {
     }
 });
 
+router.delete("/:id", authMiddleware, async (req, res) => {
+  try {
+    const routineId = req.params.id;
+    const userId = req.user.id;
 
+    const routine = await Routine.findByPk(routineId);
+    if (!routine) {
+      return res.status(404).json({ message: "Rutina no encontrada." });
+    }
+
+    if (routine.user_id !== userId) {
+      return res.status(403).json({ message: "No tienes permiso para eliminar esta rutina." });
+    }
+
+    await routine.destroy();
+
+    res.json({ message: "Rutina eliminada correctamente." });
+
+  } catch (error) {
+    console.error("Error al eliminar la rutina:", error);
+    res.status(500).json({ message: "Error al eliminar la rutina." });
+  }
+});
 module.exports = router;

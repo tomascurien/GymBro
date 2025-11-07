@@ -9,7 +9,6 @@ router.get("/", authMiddleware, async (req, res) => {
     const exercises = await Exercise.findAll({
       include: [{ 
         model: ExerciseImage, 
-        where: { is_main: true }, // Traer solo la imagen principal
         required: false // 'false' para que traiga ejercicios aunque NO tengan imagen
       }],
       order: [['name', 'ASC']] // Ordenar alfabéticamente

@@ -51,6 +51,17 @@ export const postsAPI = {
   // No hay like por ahora
 };
 
+//Ejercicios endpoints
+export const exercisesAPI = {
+  getAllExercises: () => api.get('/exercises'),
+};
+
+//Rutinas endpoints
+export const routinesAPI = {
+  getUserRoutines: (username) => api.get(`/routines/user/${username}`),
+  createRoutine: (routineData) => api.post('/routines', routineData),
+  deleteRoutine: (routineId) => api.delete(`/routines/${routineId}`),
+};
 // Users endpoints
 export const usersAPI = {
   getProfile: (username) => api.get(`/users/${username}`),
