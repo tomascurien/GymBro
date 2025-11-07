@@ -10,16 +10,27 @@ router.post("/", authMiddleware, async (req, res) => {
     const { text, image } = req.body;
     const userId = req.user.id;
 
-    await Post.create({
+    const newPost = await Post.create({
       user_id: userId,
       text,
       image,
-      created_at: new Date().toISOString(),
     });
 
-    res.json({ message: "Post creado exitosamente." });
+    //para actualizar el feed
+    const postWithUser = await Post.findOne({
+      where: { id: newPost.id },
+      include: [
+        {
+        model: User,
+        attributes: ['username', 'name', 'surname', 'profile_pic'] 
+        }
+      ]
+    });
+
+    res.status(201).json(postWithUser); 
+
   } catch (error) {
-    console.error(error);
+    console.error(error); // Ahora no debería haber error
     res.status(500).json({ message: "Error al crear el post." });
   }
 });
@@ -53,7 +64,7 @@ router.get("/user/:username", async (req, res) => {
     if (!user)
       return res.status(404).json({ message: "Usuario no encontrado." });
 
-    const posts = await Post.delete({
+    const posts = await Post.findAll({
       where: { user_id: user.id },
       include: [
         {

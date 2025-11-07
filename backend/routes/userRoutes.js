@@ -7,6 +7,7 @@ const Follower = require("../models/Follower");
 
 router.post('/register', userController.register);
 router.post('/login', userController.login);
+
 router.get("/:username", async (req, res) => {
   try {
     const { username } = req.params;

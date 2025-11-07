@@ -45,5 +45,5 @@ app.get('/', (req, res) => {
 // Sincronizar DB y lanzar servidor
 sequelize.sync().then(() => {
   console.log(" Base de datos recreada desde cero");
-  app.listen(3000, () => console.log(" Servidor corriendo en http://localhost:3000"));
+  app.listen(3001, () => console.log(" Servidor corriendo en http://localhost:3001"));
 });
