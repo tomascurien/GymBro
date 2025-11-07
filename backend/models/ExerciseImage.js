@@ -1,10 +1,7 @@
-const { Model, DataTypes } = require('sequelize');
+const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const Exercise = require('./Exercise');
 
-class ExerciseImage extends Model {}
-
-ExerciseImage.init({
+const ExerciseImage = sequelize.define('ExerciseImage', {
   id: { 
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -17,20 +14,14 @@ ExerciseImage.init({
   is_main: {
     type: DataTypes.BOOLEAN
   },
-  exercise_id: { // Foreign Key
-    type: DataTypes.INTEGER,
-    references: {
-      model: Exercise,
-      key: 'id'
-    }
+  exercise_id: {
+    type: DataTypes.INTEGER
   }
+
 }, {
   sequelize,
   modelName: 'ExerciseImage',
   timestamps: false
 });
-
-Exercise.hasMany(ExerciseImage, { foreignKey: 'exercise_id' });
-ExerciseImage.belongsTo(Exercise, { foreignKey: 'exercise_id' });
 
 module.exports = ExerciseImage;

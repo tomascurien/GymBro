@@ -1,8 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
-const Post = require("../models/Post");
-const User = require("../models/User");
+const { Post, User } = require("../models/index");
 
 //  Crear un nuevo post
 router.post("/", authMiddleware, async (req, res) => {
@@ -30,7 +29,7 @@ router.post("/", authMiddleware, async (req, res) => {
     res.status(201).json(postWithUser); 
 
   } catch (error) {
-    console.error(error); // Ahora no debería haber error
+    console.error(error);
     res.status(500).json({ message: "Error al crear el post." });
   }
 });
