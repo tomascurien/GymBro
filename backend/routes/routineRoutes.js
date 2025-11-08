@@ -7,7 +7,8 @@ const {
   RoutineExercise, 
   RoutineSet, 
   Exercise, 
-  ExerciseImage 
+  ExerciseImage,
+  FavoriteRoutine 
 } = require('../models/index');
 const authMiddleware = require("../middleware/authMiddleware");
 
@@ -76,6 +77,38 @@ router.post("/", authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/routines/user/:username/favorites
+router.get("/user/:username/favorites", async (req, res) => {
+  try {
+    const user = await User.findOne({where: { username: req.params.username} });
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado"});
+    }
+
+    const favoriteRoutines = await user.getFavoriteRoutines({
+      include: [
+        {
+          model: RoutineExercise,
+          order: [['index', 'ASC']],
+          include: [
+            { model: RoutineSet, order: [['index', 'ASC']] },
+            {model: Exercise, include: [ExerciseImage] }
+          ]
+        },
+        {
+          model: User
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json(favoriteRoutines);
+  } catch (error) {
+    console.error("Error al obtener rutinas favoritas:", error);
+    res.status(500).json({ message: "Error al obtener las rutinas favoritas"});
+  }
+});
+
 // GET /api/routines/user/:username
 // Obtiene todas las rutinas de un usuario (para su perfil)
 router.get("/user/:username", async (req, res) => {
@@ -116,6 +149,64 @@ router.get("/user/:username", async (req, res) => {
     }
 });
 
+//POST /api/routines/:id/favorite
+router.post("/:id/favorite", authMiddleware, async (req, res) => {
+  try {
+    const routineId = req.params.id;
+    const userId = req.user.id;
+
+    const routine = await Routine.findByPk(routineId);
+    if (!routine){
+      return res.status(404).json({message: "Rutina no encontrada."});
+    }
+
+    const [favorite, created] = await FavoriteRoutine.findOrCreate({
+      where: {
+        user_id: userId,
+        routine_id: routineId
+      },
+      defaults: {
+        user_id: userId,
+        routine_id: routineId
+      }
+    });
+
+    if (created) {
+      res.status(201).json({message: "Rutina guardada en favoritos."});
+    } else {
+      res.status(200).json({message: "Esta rutina ya está en tus favoritos"});
+    }
+  } catch (error) {
+    console.error("Error al guardar rutina en favoritos:", error);
+    res.status(500).json({message: "Error al guardar la rutina."})
+  }
+});
+
+router.delete("/:id/favorite", authMiddleware, async (req, res) => {
+  try {
+    const routineId = req.params.id;
+    const userId = req.user.id;
+
+    const favorite = await FavoriteRoutine.findOne({
+      where: {
+        user_id: userId,
+        routine_id: routineId
+      }
+    });
+
+    if (favorite) {
+      await favorite.destroy();
+      res.json({ message: "Rutina quitada de favoritos." });
+    } else {
+      res.status(404).json({ message: "Esta rutina no estaba en tus favoritos." });
+    }
+
+  } catch (error) {
+    console.error("Error al quitar rutina de favoritos:", error);
+    res.status(500).json({ message: "Error al quitar la rutina." });
+  }
+});
+
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const routineId = req.params.id;
@@ -139,4 +230,6 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Error al eliminar la rutina." });
   }
 });
+
+
 module.exports = router;

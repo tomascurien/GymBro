@@ -57,12 +57,12 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br bg-from-gray-900 to-gray-800 px-4">
       <div className="max-w-md w-full">
         {/* Logo y título */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-white mb-2">💪 GymBro</h1>
-          <p className="text-gray-300">Tu red social fitness</p>
+          <h1 className="text-5xl font-bold text-[#E50914] mb-2"> GymBro</h1>
+          <p className="text-gray-600">Únete a la comunidad fitness</p>
         </div>
 
         {/* Formulario */}
@@ -109,7 +109,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#E50914] text-white py-3 rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </button>

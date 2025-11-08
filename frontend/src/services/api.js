@@ -61,11 +61,14 @@ export const routinesAPI = {
   getUserRoutines: (username) => api.get(`/routines/user/${username}`),
   createRoutine: (routineData) => api.post('/routines', routineData),
   deleteRoutine: (routineId) => api.delete(`/routines/${routineId}`),
+  getFavorites: (username) => api.get(`/routines/user/${username}/favorites`),
+  addFavorite: (routineId) => api.post(`/routines/${routineId}/favorite`),
+  removeFavorite: (routineId) => api.delete(`/routines/${routineId}/favorite`),
 };
+
 // Users endpoints
 export const usersAPI = {
   getProfile: (username) => api.get(`/users/${username}`),
-  updateProfile: (data) => api.put('/users/profile', data),
   followUser: (userId) => api.post(`/users/${userId}/follow`),
   updateProfile: (profileData) => api.put(`/users/profile`, profileData)
   // No hay unfollow por ahora

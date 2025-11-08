@@ -7,6 +7,8 @@ const ExerciseImage = require('./ExerciseImage');
 const Routine = require('./Routine');
 const RoutineExercise = require('./RoutineExercise');
 const RoutineSet = require('./RoutineSet');
+const FavoriteRoutine = require('./FavouriteRoutines');
+
 // const Subscription = require('./Subscription');
 // const Payment = require('./models/Payment');
 
@@ -34,13 +36,39 @@ RoutineExercise.belongsTo(Routine, { foreignKey: 'routine_id' });
 Exercise.hasMany(RoutineExercise, { foreignKey: 'exercise_id' });
 RoutineExercise.belongsTo(Exercise, { foreignKey: 'exercise_id' });
 
+// Rutinas favoritas
+User.hasMany(Routine, { 
+  foreignKey: 'user_id', 
+  as: 'AuthoredRoutines' // <-- APODO 1
+});
+Routine.belongsTo(User, { foreignKey: 'user_id' });
+
+User.belongsToMany(Routine, {
+  through: FavoriteRoutine,
+  foreignKey: 'user_id',
+  otherKey: 'routine_id',
+  as: 'FavoriteRoutines'
+});
+
+Routine.belongsToMany(User, {
+  through: FavoriteRoutine,
+  foreignKey: 'routine_id',
+  otherKey: 'user_id',
+  as: 'FavoritedBy'
+});
+
+User.hasMany(FavoriteRoutine, { foreignKey: 'user_id' });
+FavoriteRoutine.belongsTo(User, { foreignKey: 'user_id' });
+Routine.hasMany(FavoriteRoutine, { foreignKey: 'routine_id' });
+FavoriteRoutine.belongsTo(Routine, { foreignKey: 'routine_id' });
+
 // Sets
 RoutineExercise.hasMany(RoutineSet, { foreignKey: 'routine_exercise_id', onDelete: 'CASCADE' });
 RoutineSet.belongsTo(RoutineExercise, { foreignKey: 'routine_exercise_id' });
 console.log("Asociaciones definidas.");
 
 module.exports = {
-  sequelize, // Exportamos la conexión
+  sequelize,
   User,
   Post,
   Follower,
@@ -48,6 +76,7 @@ module.exports = {
   ExerciseImage,
   Routine,
   RoutineExercise,
-  RoutineSet
+  RoutineSet,
+  FavoriteRoutine
 
 };

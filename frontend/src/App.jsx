@@ -23,7 +23,7 @@ const PublicRoute = ({ children }) => {
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [authKey, setAuthKey] = useState(0); // Para forzar re-render del Navbar
+  const [authKey, setAuthKey] = useState(0); //forzar re-render del Navbar
 
   useEffect(() => {
     checkAuth();

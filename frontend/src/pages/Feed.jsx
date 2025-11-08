@@ -118,7 +118,7 @@ const Feed = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-from-gray-900 to-gray-800">
       <div className="max-w-2xl mx-auto px-4 py-8">
         {/* Botón para crear post - Solo si está logeado */}
         {isLoggedIn && (

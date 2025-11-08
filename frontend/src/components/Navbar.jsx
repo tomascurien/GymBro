@@ -70,13 +70,17 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
+    <nav className="bg-red-700 shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/feed" className="flex items-center space-x-2">
-            <span className="text-3xl">💪</span>
-            <span className="text-2xl font-bold text-gray-900">GymBro</span>
+            <img
+              src="/GymBrofavicon.png"
+              alt="GymBro logo"
+              className="h-8 w-8 rounded-md"
+            />
+            <span className="text-2xl font-bold text-white">GymBro</span>
           </Link>
 
           {/* Buscador - Deshabilitado temporalmente */}
@@ -103,8 +107,8 @@ const Navbar = () => {
                       {result.username.charAt(0).toUpperCase()}
                     </div>
                     <div className="ml-3">
-                      <p className="font-semibold text-gray-800">{result.username}</p>
-                      <p className="text-sm text-gray-500">{result.full_name}</p>
+                      <p className="font-semibold text-white">{result.username}</p>
+                      <p className="text-sm text-white">{result.full_name}</p>
                     </div>
                   </div>
                 ))}
@@ -118,7 +122,7 @@ const Navbar = () => {
               <>
                 <Link
                   to="/feed"
-                  className="text-gray-700 hover:text-gray-900 font-medium transition"
+                  className="text-white hover:text-gray-400 font-medium transition"
                 >
                   Feed
                 </Link>
@@ -134,17 +138,17 @@ const Navbar = () => {
                   </button>
 
                   {showUserMenu && user.username && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
+                    <div className="absolute right-0 mt-2 w-48 bg-red-700 rounded-lg shadow-lg border border-gray-200 py-2">
                       <Link
                         to={`/profile/${user?.username}`}
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        className="block px-4 py-2 text-white hover:bg-red-400"
                         onClick={() => setShowUserMenu(false)}
                       >
                         Mi Perfil
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-50"
+                        className="block w-full text-left px-4 py-2 text-red-1000 hover:bg-red-400"
                       >
                         Cerrar Sesión
                       </button>
@@ -156,19 +160,19 @@ const Navbar = () => {
               <>
                 <Link
                   to="/feed"
-                  className="text-gray-700 hover:text-gray-900 font-medium transition"
+                  className="text-white hover:text-gray-400 font-medium transition"
                 >
                   Feed
                 </Link>
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition"
+                  className="px-4 py-2 text-white hover:text-gray-400 font-medium transition"
                 >
                   Iniciar Sesión
                 </Link>
                 <Link
                   to="/register"
-                  className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-medium"
+                  className="border border-white text-white font-semibold px-4 py-2 rounded-lg hover:bg-white hover:text-[#E50914] transition"
                 >
                   Registrarse
                 </Link>
