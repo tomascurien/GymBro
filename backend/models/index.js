@@ -19,8 +19,17 @@ User.hasMany(Post, { foreignKey: 'user_id' });
 Post.belongsTo(User, { foreignKey: 'user_id' });
 
 // Seguidores (relación N:M entre usuarios)
-User.hasMany(Follower, { foreignKey: 'follower_id', as: 'Following' });
-User.hasMany(Follower, { foreignKey: 'followed_id', as: 'Followers' });
+User.hasMany(Follower, { foreignKey: 'follower_id', as: 'following' });
+User.hasMany(Follower, { foreignKey: 'followed_id', as: 'followers' });
+Follower.belongsTo(User, {
+  foreignKey: 'follower_id',
+  as: 'follower',
+});
+
+Follower.belongsTo(User, {
+  foreignKey: 'followed_id',
+  as: 'followed',
+});
 
 // Ejercicios
 Exercise.hasMany(ExerciseImage, { foreignKey: 'exercise_id' });

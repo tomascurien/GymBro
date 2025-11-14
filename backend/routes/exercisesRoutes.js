@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { Exercise, ExerciseImage } = require('../models/index');
-const authMiddleware = require("../middleware/authMiddleware");
+const { authMiddleware, SECRET_KEY } = require('../middleware/authMiddleware');
 
 // GET /api/exercises
 router.get("/", authMiddleware, async (req, res) => {

@@ -10,24 +10,23 @@ const Feed = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [error, setError] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
+  const [activeTab, setActiveTab] = useState('global');
 
   useEffect(() => {
     // Cargar el feed solo una vez al montar
     loadFeed();
-  }, []);
+  }, [activeTab]);
   
   useEffect(() => {
     // Escuchar cambios de autenticación en un efecto separado
     const handleStorageChange = () => {
       const token = localStorage.getItem('token');
       const loggedIn = !!token;
-      console.log('🔄 Storage changed!');
-      console.log('🔄 Token:', token?.substring(0, 20));
-      console.log('🔄 Nuevo estado logged in:', loggedIn);
       setIsLoggedIn(loggedIn);
       
-      // Forzar re-render
-      console.log('🔄 Forzando actualización del Feed...');
+      if (!loggedIn && activeTab === 'following') {
+        setActiveTab('global');
+      }
     };
     
     window.addEventListener('storage', handleStorageChange);
@@ -40,16 +39,24 @@ const Feed = () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('userLoggedIn', handleStorageChange);
     };
-  }, []);
+  }, [activeTab]);
 
   const loadFeed = async () => {
     try {
       setLoading(true);
       setError('');
       
-      console.log('📡 Cargando posts del feed...');
+      let response;
       
-      const response = await postsAPI.getFeed();
+      if (activeTab === 'following') {
+        // Cargar posts de usuarios que sigo
+        console.log('Cargando posts de usuarios seguidos...');
+        response = await postsAPI.getFollowingFeed();
+      } else {
+        // Cargar todos los posts (global)
+        console.log('Cargando feed global...');
+        response = await postsAPI.getFeed();
+      }
       
       console.log('✅ Respuesta recibida:', response.data);
       
@@ -137,6 +144,35 @@ const Feed = () => {
           <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-6">
             <p className="font-semibold">👋 ¡Bienvenido a GymBro!</p>
             <p className="text-sm mt-1">Inicia sesión para crear posts y seguir a otros usuarios.</p>
+          </div>
+        )}
+        {/* tabs */}
+        {isLoggedIn && (
+          <div className="mb-6 border-b border-gray-200 bg-white rounded-t-xl shadow-md">
+            <nav className="-mb-px flex" aria-label="Tabs">
+              <button
+                onClick={() => setActiveTab('global')}
+                className={`
+                  ${activeTab === 'global' 
+                    ? 'border-gray-900 text-gray-900' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
+                  flex-1 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                `}
+              >
+                 Global
+              </button>
+              <button
+                onClick={() => setActiveTab('following')}
+                className={`
+                  ${activeTab === 'following' 
+                    ? 'border-gray-900 text-gray-900' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
+                  flex-1 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                `}
+              >
+                 Siguiendo
+              </button>
+            </nav>
           </div>
         )}
 

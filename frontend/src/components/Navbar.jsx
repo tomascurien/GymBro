@@ -1,7 +1,7 @@
 // frontend/src/components/Navbar.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { usersAPI } from '../services/api';
+import usersAPI from '../services/api';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -19,8 +19,6 @@ const Navbar = () => {
   
   const [user, setUser] = useState(getUserFromStorage());
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [showSearchResults, setShowSearchResults] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
@@ -38,21 +36,26 @@ const Navbar = () => {
     };
   }, []);
 
-  const handleSearch = async (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
+  const handleSearch = () => {
+    if (searchQuery.trim() !== '') {
+      navigate(`/profile/${searchQuery.trim()}`);
+    }
+  }
 
-    if (query.trim().length > 0) {
-      try {
-        const response = await usersAPI.searchUsers(query);
-        setSearchResults(response.data.users);
-        setShowSearchResults(true);
-      } catch (error) {
-        console.error('Error buscando usuarios:', error);
-      }
-    } else {
-      setSearchResults([]);
-      setShowSearchResults(false);
+  const handleQueryChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // Esta función se llama CUANDO el usuario presiona "Enter"
+  const handleSearchSubmit = (e) => {
+    e.preventDefault(); // Previene que la página se recargue
+    const query = searchQuery.trim(); // Limpiamos espacios
+
+    if (query) {
+      // Navegamos al perfil
+      navigate(`/profile/${query}`);
+      // Limpiamos la barra de búsqueda
+      setSearchQuery('');
     }
   };
 
@@ -61,12 +64,6 @@ const Navbar = () => {
     localStorage.removeItem('user');
     setUser(null);
     navigate('/feed');
-  };
-
-  const goToProfile = (userId) => {
-    setShowSearchResults(false);
-    setSearchQuery('');
-    navigate(`/profile/${userId}`);
   };
 
   return (
@@ -83,37 +80,20 @@ const Navbar = () => {
             <span className="text-2xl font-bold text-white">GymBro</span>
           </Link>
 
-          {/* Buscador - Deshabilitado temporalmente */}
-          <div className="flex-1 max-w-md mx-8 relative">
+          <div className="flex items-center bg-red-800 rounded-full shadow-md overflow-hidden">
             <input
               type="text"
               value={searchQuery}
-              onChange={handleSearch}
-              placeholder="Buscar usuarios (próximamente)..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-800 bg-gray-50"
-              disabled
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar usuario..."
+              className="flex-1 px-4 py-2 bg-transparent text-white placeholder-gray-200 focus:outline-none"
             />
-            
-            {/* Resultados de búsqueda */}
-            {showSearchResults && searchResults.length > 0 && (
-              <div className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto">
-                {searchResults.map((result) => (
-                  <div
-                    key={result.id}
-                    onClick={() => goToProfile(result.id)}
-                    className="flex items-center p-3 hover:bg-gray-50 cursor-pointer"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-white font-bold">
-                      {result.username.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="ml-3">
-                      <p className="font-semibold text-white">{result.username}</p>
-                      <p className="text-sm text-white">{result.full_name}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <button
+              onClick={handleSearch}
+              className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-semibold transition"
+            >
+              Buscar
+            </button>
           </div>
 
           {/* Menu de usuario o botones de login */}
@@ -141,14 +121,14 @@ const Navbar = () => {
                     <div className="absolute right-0 mt-2 w-48 bg-red-700 rounded-lg shadow-lg border border-gray-200 py-2">
                       <Link
                         to={`/profile/${user?.username}`}
-                        className="block px-4 py-2 text-white hover:bg-red-400"
+                        className="block px-4 py-2 text-white hover:bg-red-500 "
                         onClick={() => setShowUserMenu(false)}
                       >
                         Mi Perfil
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-red-1000 hover:bg-red-400"
+                        className="block w-full text-left px-4 py-2 text-white hover:bg-red-500 "
                       >
                         Cerrar Sesión
                       </button>

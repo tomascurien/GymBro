@@ -10,7 +10,7 @@ const {
   ExerciseImage,
   FavoriteRoutine 
 } = require('../models/index');
-const authMiddleware = require("../middleware/authMiddleware");
+const { authMiddleware, SECRET_KEY } = require('../middleware/authMiddleware');
 
 // POST /api/routines
 router.post("/", authMiddleware, async (req, res) => {
@@ -217,7 +217,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
       return res.status(404).json({ message: "Rutina no encontrada." });
     }
 
-    if (routine.user_id !== userId) {
+    if (routine.user_id !== userId && req.user.role !== "admin") {
       return res.status(403).json({ message: "No tienes permiso para eliminar esta rutina." });
     }
 

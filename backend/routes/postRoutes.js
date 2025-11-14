@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
-const { Post, User } = require("../models/index");
+const { authMiddleware, SECRET_KEY } = require('../middleware/authMiddleware');
+const { Post, User, Follower } = require("../models/index");
+const { Op } = require("sequelize"); // following feed
 
 //  Crear un nuevo post
 router.post("/", authMiddleware, async (req, res) => {
@@ -34,6 +35,42 @@ router.post("/", authMiddleware, async (req, res) => {
   }
 });
 
+router.get("/following", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const followingList = await Follower.findAll({
+      where: { follower_id: userId},
+      attributes: ['followed_id']
+    });
+
+    //array de ids
+    const followingIds = followingList.map(f => f.followed_id);
+
+    // OP = comando IN de SQL
+    //WHERE busca un solo ID entonces conviene usar OP
+    const posts = await Post.findAll({
+      where: {
+        user_id: {
+          [Op.in]: followingIds
+        }
+      },
+      include: [
+        {
+          model: User,
+          attributes: ["username", "name", "surname", "profile_pic"],
+        },
+      ],
+      order: [["id", "DESC"]], // En el mismo orden que el feed global
+    });
+
+    res.json(posts);
+
+  } catch (error) {
+    console.error("Error al obtener el feed de seguidos:", error);
+    res.status(500).json({ message: "Error al obtener el feed." });
+  }
+})
 //  Obtener el feed global
 router.get("/feed", async (req, res) => {
   try {
@@ -93,7 +130,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     }
 
     // Verificar que el usuario autenticado sea el autor
-    if (post.user_id !== userId) {
+    if (post.user_id !== userId && req.user.role !== "admin") {
       return res.status(403).json({ message: "No tienes permiso para eliminar este post." });
     }
     await post.destroy(); // eliminación real

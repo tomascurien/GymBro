@@ -25,7 +25,7 @@ const BookmarkIcon = ({ isFavorited, isLoggedIn, ...props }) => (
   </button>
 );
 
-// --- HIJO 1: El item de ejercicio (dentro de la tarjeta) ---
+// El item de ejercicio (dentro de la tarjeta) 
 const RoutineExerciseItem = ({ exercise }) => {
 // exercise = { Exercise: { name: "..." }, reps: 8, weight_kg: 50, RoutineSets: [...] }
       return (
@@ -57,95 +57,92 @@ const RoutineExerciseItem = ({ exercise }) => {
       );
       };
 
-// --- HIJO 2: La tarjeta de rutina (la que tiene el botón) ---
+// La tarjeta de rutina
 const RoutineCard = ({ routine, isOwnProfile, onRoutineDelete, onFavoriteToggle, myFavoriteIds, isLoggedIn }) => {
-      const userStr = localStorage.getItem('user');
-      const currentUser = userStr ? JSON.parse(userStr) : {};
-      const isMyRoutine = routine.user_id === currentUser.id;
+      const userStr = localStorage.getItem('user');
+      const currentUser = userStr ? JSON.parse(userStr) : {};
+      const isMyRoutine = routine.user_id === currentUser.id;
+      const isAdmin = currentUser.role == "admin";
 
-      return (
-      <div className="bg-gray-100 rounded-xl shadow-md p-6 mb-6"> {/* Fondo gris que pediste */}
-      
-        {/* * --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
-         * Este div debe tener 'flex', 'justify-between' y 'items-center'
-         */}
-      <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-gray-900">{routine.title}</h3>
-        
-        {/* Este div agrupa los botones */}
-      <div className="flex items-center space-x-2">
-            {isMyRoutine ? (
-            // Si la rutina es mía
-            <button
-            onClick={() => onRoutineDelete(routine.id)}
-            className="text-sm text-red-500 hover:text-red-700 font-medium px-3 py-1 rounded-lg hover:bg-red-100 transition-colors"
-            >
-            Eliminar
-            </button>
-             ) : (
-            // Si la rutina NO es mía
-            <BookmarkIcon 
-              isLoggedIn={isLoggedIn}
-              isFavorited={myFavoriteIds.has(routine.id)} // <-- AQUÍ OCURRE EL ERROR
-              onClick={() => onFavoriteToggle(routine.id)} 
-            />
-            )}
-        </div>
-      </div>
+      return (
+      <div className="bg-gray-100 rounded-xl shadow-md p-6 mb-6"> {/* Fondo gris que pediste */}
+      
 
-      <ul className="divide-y divide-gray-200">
-        {routine.RoutineExercises.sort((a, b) => a.index - b.index).map((exercise) => (
-          <RoutineExerciseItem key={exercise.id} exercise={exercise} />
-        ))}
-      </ul>
-    </div>
-  );
+      <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold text-gray-900">{routine.title}</h3>
+
+
+                  <div className="flex items-center space-x-2">
+             {(isMyRoutine || isAdmin) ? (
+             <button
+             onClick={() => onRoutineDelete(routine.id)}
+             className="text-sm text-red-500 hover:text-red-700 font-medium px-3 py-1 rounded-lg hover:bg-red-100 transition-colors"
+             >
+             Eliminar
+             </button>
+              ) : (
+             // Si la rutina NO es mía
+             <BookmarkIcon 
+               isLoggedIn={isLoggedIn}
+               isFavorited={myFavoriteIds.has(routine.id)} // <-- AQUÍ OCURRE EL ERROR
+               onClick={() => onFavoriteToggle(routine.id)} 
+             />
+             )}
+         </div>
+       </div>
+
+       <ul className="divide-y divide-gray-200">
+         {routine.RoutineExercises.sort((a, b) => a.index - b.index).map((exercise) => (
+           <RoutineExerciseItem key={exercise.id} exercise={exercise} />
+         ))}
+       </ul>
+     </div>
+  );
 };
 
-// --- PADRE: El componente principal que exportás ---
+// El componente principal
 const ProfileRoutines = ({ 
   routines, 
-  onAddRoutine,    // Función para AÑADIR (solo para pestaña 'Rutinas')
+  onAddRoutine,
   isOwnProfile, 
   onRoutineDelete, 
   onFavoriteToggle, 
   myFavoriteIds,
   isLoggedIn
 }) => {
-  return (
-    <div className="space-y-6">
+  return (
+    <div className="space-y-6">
 
       {/* Si no hay rutinas, muestra el mensaje */}
-      {routines.length === 0 && (
-        <div className="bg-gray-100 rounded-xl shadow-md p-8 text-center">
-          <div className="text-5xl mb-4">🏋️</div>
-          <h3 className="text-lg font-semibold text-gray-700">
-            Aún no hay rutinas
-          </h3>
-          <p className="text-gray-500 text-sm">
+      {routines.length === 0 && (
+        <div className="bg-gray-100 rounded-xl shadow-md p-8 text-center">
+          <div className="text-5xl mb-4">🏋️</div>
+          <h3 className="text-lg font-semibold text-gray-700">
+            Aún no hay rutinas
+          </h3>
+          <p className="text-gray-500 text-sm">
             {isOwnProfile && onAddRoutine // Si estoy en la pestaña "Rutinas"
               ? "¡Crea tu primera rutina para que aparezca aquí!"
               : "Este usuario aún no tiene rutinas en esta lista."
             }
-          </p>
-        </div>
-      )}
+          </p>
+        </div>
+      )}
 
-      {/* Si hay rutinas, muéstralas */}
-      {routines.length > 0 && routines.map((routine) => (
-        <RoutineCard 
-          key={routine.id}
-          routine={routine}
-          isOwnProfile={isOwnProfile} // 'isOwnProfile' se usa para el mensaje "no hay rutinas"
-          onRoutineDelete={onRoutineDelete} 
-          // --- Pasamos los nuevos props a la tarjeta ---
+      {/* Si hay rutinas */}
+       {routines.length > 0 && routines.map((routine) => (
+        <RoutineCard 
+          key={routine.id}
+          routine={routine}
+          isOwnProfile={isOwnProfile} 
+          onRoutineDelete={onRoutineDelete} 
           onFavoriteToggle={onFavoriteToggle}
           myFavoriteIds={myFavoriteIds}
           isLoggedIn={isLoggedIn}
-        />
-      ))}
-    </div>
-  );
+        />
+      ))}
+    </div>
+  );
 };
 
 export default ProfileRoutines;

@@ -33,6 +33,7 @@ const Profile = () => {
 
   const loadProfileData = async () => {
     try {
+      
       setLoading(true);
       setError('');
 
@@ -166,6 +167,10 @@ const handleRoutineDelete = async (routineId) => {
     setShowEditModal(false);
   };
 
+  const handleFollowUpdate = () => {
+  loadProfileData(); 
+};
+
   if (loading) {
     return (
      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -207,7 +212,7 @@ const handleRoutineDelete = async (routineId) => {
         <ProfileHeader
           profile={profile}
           isOwnProfile={isOwnProfile}
-          onFollowUpdate={loadProfileData}
+          onFollowUpdate={(updatedProfile) => setProfile(updatedProfile)}
         />
 
         {/* --- PESTAÑAS (TABS) --- */}

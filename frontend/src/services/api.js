@@ -45,6 +45,7 @@ export const authAPI = {
 // Posts endpoints
 export const postsAPI = {
   getFeed: () => api.get(`/posts/feed`),
+  getFollowingFeed: () => api.get(`/posts/following`),
   getUserPosts: (username) => api.get(`/posts/user/${username}`),
   createPost: (data) => api.post('/posts', data),
   deletePost: (postId) => api.delete(`/posts/${postId}`),
@@ -68,10 +69,31 @@ export const routinesAPI = {
 
 // Users endpoints
 export const usersAPI = {
-  getProfile: (username) => api.get(`/users/${username}`),
-  followUser: (userId) => api.post(`/users/${userId}/follow`),
-  updateProfile: (profileData) => api.put(`/users/profile`, profileData)
-  // No hay unfollow por ahora
+  getProfile: (username) => {
+  const token = localStorage.getItem('token');
+  return api.get(`/users/profile/${username}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+},
+  followUser: async (userId) => {
+    try {
+      const res = await api.post(`/users/${userId}/follow`);
+      return res; // → Devuelve { message, isFollowing: true }
+    } catch (err) {
+      console.error("Error al seguir al usuario:", err);
+      throw err;
+    }
+  },
+  unfollowUser: async (userId) => {
+    try {
+      const res = await api.delete(`/users/${userId}/follow`);
+      return res; // → Devuelve { message, isFollowing: false }
+    } catch (err) {
+      console.error("Error al dejar de seguir:", err);
+      throw err;
+    }
+  },
+  updateProfile: (profileData) => api.put(`/users/profile`, profileData),
   // No hay search por ahora
 };
 
