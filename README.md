@@ -1,34 +1,55 @@
-# GymBro es una red social enfocada en el fitness en la que los usuarios comparten posteos, rutinas y más. 
+**GymBro es una red social enfocada en el fitness**, donde los usuarios pueden compartir posteos, rutinas, seguir a otros atletas y construir su perfil fitness.  
+El objetivo es crear una comunidad motivadora donde cada usuario pueda mostrar su progreso, descubrir nuevas rutinas y conectar con otros.
 
---------------------------------------------- 
-BACKEND:
-Post register: permite a los usuarios crear su cuenta.
-Post login: permite a los usuarios iniciar sesión
-Get profile: devuelve el perfil de un usuario (según su username)
-Put profile: actualiza el perfil de un usuario (name, surname, bio)
-Post follow: permite seguir a usuarios (sólo si está logeado)
-Delete follow: elimina el follow
-Post content: permite postear (sólo texto)
-Get feed: devuelve el feed global de posts de GymBro (en orden descendiente según el momento que fue posteado)
-Get user post: devuelve el feed de un usuario (Es decir, una lista de sus posteos)
-Delete post: permite eliminar un posteo (sólo si es el dueño de la cuenta o un administrador)
-Get ejercicios: devuelve los ejercicios dentro de una rutina
-Post rutina: permite crear rutinas (se muestran en el perfil del usuario)
-Post rutinas favoritas: permite añadir rutinas de otro usuario a "guardado" dentro del perfil
-Delete rutinas favoritas: permite eliminar rutinas guardadas
-Get rutinas favoritas: devuelve las rutinas guardadas por el usuario
-Get following feed: devuelve un feed de los usuarios a los cuales el usuario sigue (sólo disponible si está logeado)
+---
 
---------------------------------------------- 
-FRONTEND:
-Autenticación: Login y registro con validación.
-Navbar: Acceso al feed de posts, perfil, menú desplegable y búsqueda de usuarios
-Pefil: Listado de posteos, rutinas, rutinas favoritas, función de seguir.
-Posts: Crear posts de texto, eliminar posts, feed global y feed de usuarios seguidos.
-Rutinas: crear rutinas con ejercicios, guardar rutinas de otros usuarios y detalles de rutinas.
+## 📋 Tabla de Contenidos
+- [Características](#-características)
+- [Capturas de Pantalla](#-capturas-de-pantalla)
+- [Tecnologías Utilizadas](#-tecnologías-utilizadas)
+- [Ejecución](#-ejecución)
 
---------------------------------------------- 
-Cómo ejecutar el proyecto:
+
+---
+
+## 🚀 Características
+✔️ Registro e inicio de sesión con JWT  
+✔️ Perfiles de usuario con nombre, apellido y biografía  
+✔️ Sistema de seguidores / siguiendo  
+✔️ Feed global y feed personalizado con usuarios seguidos  
+✔️ Creación de posteos (texto)  
+✔️ Creación y guardado de rutinas  
+✔️ Eliminación de posts (dueño o admin)  
+✔️ Búsqueda de usuarios  
+✔️ Frontend responsivo en React  
+
+---
+
+## 🖼️ Capturas de Pantalla
+
+| ![Perfil]<img width="1269" height="725" alt="Screenshot_Perfil" src="https://github.com/user-attachments/assets/c7ff4126-e12d-4813-890e-f4a7368997c1" />
+| ![Feed]<img width="1301" height="862" alt="Screenshot_Feed" src="https://github.com/user-attachments/assets/e6323388-65cc-4bc5-a05b-c8b5d53e2185" />
+| ![Rutina]<img width="875" height="244" alt="Screenshot_Rutina" src="https://github.com/user-attachments/assets/e4b49b89-03c5-429e-b7e8-5f9863800bc9" />
+
+
+---
+
+## 🛠️ Tecnologías Utilizadas
+
+### **Frontend**
+- React  
+- Context API / Redux (opcional)  
+- CSS Modules / TailwindCSS  
+
+### **Backend**
+- Node.js  
+- Express  
+- JSON Web Tokens (JWT)  
+- Sequelize  
+- SQLite3 / MySQL
+
+---
+## Ejecución
 Backend:
 -cd backend
 -node index.js
