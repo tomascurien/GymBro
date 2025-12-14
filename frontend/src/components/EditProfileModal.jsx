@@ -73,23 +73,7 @@ const EditProfileModal = ({ currentUser, onClose, onProfileUpdated }) => {
             className="w-full border border-gray-300 rounded-lg p-2"
             rows="3"
           ></textarea>
-          <input
-            type="text"
-            name="profile_pic"
-            value={formData.profile_pic}
-            onChange={handleChange}
-            placeholder="URL de tu foto de perfil"
-            className="w-full border border-gray-300 rounded-lg p-2"
-          />
-          <input
-            type="text"
-            name="cover_pic"
-            value={formData.cover_pic}
-            onChange={handleChange}
-            placeholder="URL de tu foto de portada"
-            className="w-full border border-gray-300 rounded-lg p-2"
-          />
-
+          
           <div className="flex justify-end space-x-3">
             <button
               type="button"

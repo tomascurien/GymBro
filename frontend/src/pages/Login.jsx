@@ -22,6 +22,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setLoading(true);
     setError('');
 
@@ -61,7 +62,11 @@ const Login = () => {
       <div className="max-w-md w-full">
         {/* Logo y título */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-[#E50914] mb-2"> GymBro</h1>
+          <img
+              src="/GymBro_banner.png"
+              alt="GymBro logo"
+              className="mx-auto h-36 w-auto object-contain rounded-xl shadow-lg mb-4 hover:scale-105 transition-transform duration-300"
+            />
           <p className="text-gray-600">Únete a la comunidad fitness</p>
         </div>
 

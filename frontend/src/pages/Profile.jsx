@@ -167,9 +167,15 @@ const handleRoutineDelete = async (routineId) => {
     setShowEditModal(false);
   };
 
-  const handleFollowUpdate = () => {
-  loadProfileData(); 
-};
+  const handleRoutineCreated = async () => {
+    try {
+      const routinesRes = await routinesAPI.getUserRoutines(username);
+      setRoutines(routinesRes.data || []);
+    } catch (error) {
+      console.error("Error actualizando rutinas:", error);
+    }
+    setShowRoutineModal(false);
+  };
 
   if (loading) {
     return (
@@ -327,11 +333,8 @@ const handleRoutineDelete = async (routineId) => {
        {showRoutineModal && (
         <CreateRoutineModal
           onClose={() => setShowRoutineModal(false)}
-          onRoutineCreated={(newRoutine) => {
-            setRoutines([newRoutine, ...routines]);
-            setShowRoutineModal(false);
-          }}
-        />
+          onRoutineCreated={handleRoutineCreated}
+       />
       )}
     </div>
   );

@@ -6,13 +6,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Feed from './pages/Feed';
 import Profile from './pages/Profile';
-import { authAPI } from './services/api';
-
-// Componente para rutas protegidas
-const PrivateRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
-  return token ? children : <Navigate to="/login" />;
-};
 
 // Componente para rutas públicas (redirige al feed si ya está autenticado)
 const PublicRoute = ({ children }) => {
@@ -53,12 +46,6 @@ function App() {
       setIsAuthenticated(true);
     }
     setLoading(false);
-  };
-
-  // Función para actualizar autenticación (llamar después del login)
-  const updateAuth = () => {
-    setIsAuthenticated(true);
-    setAuthKey(prev => prev + 1); // Forzar re-render del Navbar
   };
 
   if (loading) {

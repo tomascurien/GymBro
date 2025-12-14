@@ -42,14 +42,6 @@ const CreatePostModal = ({ onClose, onPostCreated }) => {
             rows="3"
           ></textarea>
 
-          <input
-            type="text"
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-            placeholder="URL de imagen (opcional)"
-            className="w-full border border-gray-300 rounded-lg p-2 mb-4"
-          />
-
           <div className="flex justify-end space-x-3">
             <button
               type="button"

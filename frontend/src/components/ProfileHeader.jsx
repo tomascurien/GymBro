@@ -90,13 +90,6 @@ const handleFollowToggle = async () => {
             <p className="text-gray-700 max-w-2xl">{profile.bio}</p>
           )}
 
-          {/* Fecha de registro */}
-          <p className="text-sm text-gray-500 mt-3">
-            Miembro desde {new Date(profile.created_at).toLocaleDateString('es-ES', {
-              month: 'long',
-              year: 'numeric'
-            })}
-          </p>
         </div>
       </div>
     </div>
