@@ -5,7 +5,7 @@ const ExerciseImage = sequelize.define('ExerciseImage', {
   id: { 
     type: DataTypes.INTEGER,
     primaryKey: true,
-    allowNull: false
+    autoIncrement: true
   },
   image_url: {
     type: DataTypes.STRING,

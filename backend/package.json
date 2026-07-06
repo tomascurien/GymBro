@@ -1,4 +1,13 @@
 {
+  "name": "gymbro-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.93.1",
     "axios": "^1.13.2",
@@ -10,7 +19,6 @@
     "multer": "^2.0.2",
     "pg": "^8.17.1",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.37.7",
-    "sqlite3": "^5.1.7"
+    "sequelize": "^6.37.7"
   }
 }

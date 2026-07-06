@@ -23,8 +23,11 @@ app.get('/', (req, res) => {
   res.send('GymBro API funcionando ');
 });
 
+// Puerto: Railway (u otro host) inyecta process.env.PORT; en local cae a 3001
+const PORT = process.env.PORT || 3001;
+
 // Sincronizar DB y lanzar servidor
-sequelize.sync({alter: true}).then(() => {
-  console.log(" Base de datos recreada desde cero");
-  app.listen(3001, () => console.log(" Servidor corriendo en http://localhost:3001"));
+sequelize.sync({ alter: true }).then(() => {
+  console.log("Base de datos sincronizada.");
+  app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
 });

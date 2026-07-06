@@ -1,7 +1,9 @@
 
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3001/api';
+// En local cae a localhost; para apuntar al backend de Railway, definí
+// REACT_APP_API_URL en frontend/.env (ej: https://tu-app.up.railway.app/api)
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const api = axios.create({
   baseURL: API_URL,
