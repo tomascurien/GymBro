@@ -1,37 +1,56 @@
 const express = require("express");
 const router = express.Router();
-const { authMiddleware, SECRET_KEY } = require('../middleware/authMiddleware');
+const { authMiddleware } = require('../middleware/authMiddleware');
 const { Post, User, Follower } = require("../models/index");
 const { Op } = require("sequelize"); // following feed
+const { upload, uploadFileToSupabase } = require('../services/uploadService');
 
 //  Crear un nuevo post
-router.post("/", authMiddleware, async (req, res) => {
+router.post("/", authMiddleware, upload.single('media'), async (req, res) => {
   try {
-    const { text, image } = req.body;
+    const { text } = req.body; // El texto sigue viniendo en el body
     const userId = req.user.id;
+    let mediaUrl = null;
+    let mediaType = 'none';
 
+    // Si se subió un archivo, lo procesamos
+    if (req.file) {
+      console.log(`Subiendo archivo: ${req.file.originalname} (${req.file.mimetype})...`);
+      
+      // 1. Subir a Supabase (Bucket 'gymbro-media' o el que hayas creado)
+      // Asegúrate de crear el bucket 'gymbro-media' en Supabase y hacerlo público
+      mediaUrl = await uploadFileToSupabase(req.file, 'gymbro-posts');
+      
+      // 2. Determinar el tipo de medio
+      if (req.file.mimetype.startsWith('image/')) {
+        mediaType = 'image';
+      } else if (req.file.mimetype.startsWith('video/')) {
+        mediaType = 'video';
+      }
+    }
+
+    // 3. Crear el post en la base de datos
     const newPost = await Post.create({
       user_id: userId,
-      text,
-      image,
+      text: text || '', // Puede estar vacío si sube solo una foto
+      media_url: mediaUrl,
+      media_type: mediaType
     });
 
-    //para actualizar el feed
+    // 4. Devolver el post completo con datos del usuario
     const postWithUser = await Post.findOne({
       where: { id: newPost.id },
-      include: [
-        {
+      include: {
         model: User,
         attributes: ['username', 'name', 'surname', 'profile_pic'] 
-        }
-      ]
+      }
     });
 
-    res.status(201).json(postWithUser); 
+    res.status(201).json(postWithUser);
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al crear el post." });
+    console.error("Error al crear el post:", error);
+    res.status(500).json({ message: "Error al crear el post: " + error.message });
   }
 });
 

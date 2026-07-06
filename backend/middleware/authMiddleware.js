@@ -1,5 +1,11 @@
+require('dotenv').config();
 const jwt = require('jsonwebtoken');
-const SECRET_KEY = 'gymbro_secret_key';
+
+const SECRET_KEY = process.env.SECRET_KEY;
+
+if (!SECRET_KEY) {
+  throw new Error('Falta la variable SECRET_KEY en el archivo .env');
+}
 
 const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;

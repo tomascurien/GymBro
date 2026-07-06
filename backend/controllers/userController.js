@@ -1,8 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-
-const SECRET_KEY = 'gymbro_secret_key';
+const { SECRET_KEY } = require('../middleware/authMiddleware');
 
 // Registro
 exports.register = async (req, res) => {

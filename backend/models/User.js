@@ -19,17 +19,28 @@ const User = sequelize.define('User', {
     allowNull: false,
     unique: true,
   },
-  password: DataTypes.STRING,
+  password: { // Hash de la contraseña
+    type: DataTypes.STRING,
+    allowNull: false, 
+  },
   role: {
     type: DataTypes.STRING,
     defaultValue: 'user',
   },
   bio: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT, // Mejor TEXT para biografías largas
     defaultValue: '',
   },
-  profile_pic: DataTypes.STRING,
-  cover_pic: DataTypes.STRING,
+  // --- CAMPOS DE IMAGEN ---
+  profile_pic: {
+    type: DataTypes.STRING(1024), // Aumentamos longitud por si la URL es larga
+    allowNull: true,
+  },
+  cover_pic: {
+    type: DataTypes.STRING(1024),
+    allowNull: true,
+  },
+  // ------------------------
   time_stamp: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
