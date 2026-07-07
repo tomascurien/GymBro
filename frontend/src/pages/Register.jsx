@@ -4,31 +4,34 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { authAPI } from '../services/api';
+import { LogoMark } from '../components/Logo';
+import { useI18n } from '../i18n/I18nContext';
 
 const Register = () => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
 
-  // 1. Definimos el esquema de validación con Yup
+  // Esquema de validación con Yup (mensajes traducidos)
   const validationSchema = Yup.object({
     username: Yup.string()
-      .min(3, 'El usuario debe tener al menos 3 caracteres')
-      .required('El nombre de usuario es obligatorio'),
+      .min(3, t('valid.usernameMin'))
+      .required(t('valid.usernameRequired')),
     name: Yup.string()
-      .required('El nombre es obligatorio'),
+      .required(t('valid.nameRequired')),
     surname: Yup.string()
-      .required('El apellido es obligatorio'),
+      .required(t('valid.surnameRequired')),
     email: Yup.string()
-      .email('Ingresa un correo electrónico válido')
-      .required('El correo es obligatorio'),
+      .email(t('valid.emailInvalid'))
+      .required(t('valid.emailRequired')),
     password: Yup.string()
-      .min(6, 'La contraseña debe tener al menos 6 caracteres')
-      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Debe tener mayúscula, minúscula y número')
-      .required('La contraseña es obligatoria'),
+      .min(6, t('valid.passwordMin'))
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, t('valid.passwordPattern'))
+      .required(t('valid.passwordRequired')),
     confirmPassword: Yup.string()
-      .oneOf([Yup.ref('password'), null], 'Las contraseñas no coinciden')
-      .required('Debes confirmar tu contraseña'),
+      .oneOf([Yup.ref('password'), null], t('valid.confirmMatch'))
+      .required(t('valid.confirmRequired')),
   });
 
   const formik = useFormik({
@@ -46,187 +49,157 @@ const Register = () => {
       setServerError('');
 
       try {
-        // Formik ya validó todo, preparamos los datos
         const { confirmPassword, ...dataToSend } = values;
-        
         const response = await authAPI.register(dataToSend);
-        
-        console.log('📋 Respuesta del registro:', response.data);
-        
-        // Opcional: Auto-login si la API devuelve token, o redirigir
-        if (response.data.token) {
-             localStorage.setItem('token', response.data.token);
-             localStorage.setItem('user', JSON.stringify(response.data.user));
-             window.dispatchEvent(new Event('userLoggedIn'));
-             navigate('/feed', { replace: true });
-        } else {
-             alert('¡Cuenta creada exitosamente! Inicia sesión.');
-             navigate('/login');
-        }
 
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+          // Navegar ANTES de disparar el evento: si el evento re-renderiza mientras
+          // seguimos en /register, PublicRoute redirige a /feed y pisa esta navegación.
+          // Onboarding: aterrizar en el perfil propio con el modal de edición abierto
+          navigate(`/profile/${response.data.user.username}?welcome=1`, { replace: true });
+          window.dispatchEvent(new Event('userLoggedIn'));
+        } else {
+          alert(t('auth.accountCreated'));
+          navigate('/login');
+        }
       } catch (err) {
         console.error('Error en registro:', err);
-        setServerError(err.response?.data?.message || 'Error al registrarse');
+        setServerError(err.response?.data?.message || t('auth.registerError'));
       } finally {
         setLoading(false);
       }
     },
   });
 
+  const inputClass = (touched, error) =>
+    `w-full px-4 py-3 border rounded-xl bg-raised text-ink placeholder-muted focus:outline-none focus:ring-2 ${
+      touched && error
+        ? 'border-danger/60 focus:ring-danger/40'
+        : 'border-edge focus:ring-accent'
+    }`;
+
+  const fieldError = (name) =>
+    formik.touched[name] && formik.errors[name] ? (
+      <p className="text-danger text-xs mt-1">{formik.errors[name]}</p>
+    ) : null;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-from-gray-900 to-gray-800 px-4 py-8">
-      <div className="max-w-md w-full">
-        {/* Logo y título */}
+    <div className="min-h-screen flex items-center justify-center bg-canvas px-4 py-8">
+      <div className="max-w-md w-full animate-fade-up">
+        {/* Logo y campaña */}
         <div className="text-center mb-8">
-          <img
-              src="/GymBro_banner.png"
-              alt="GymBro logo"
-              className="mx-auto h-36 w-auto object-contain rounded-xl shadow-lg mb-4 hover:scale-105 transition-transform duration-300"
-            />
-          <p className="text-gray-600">Únete a la comunidad fitness</p>
+          <LogoMark size={64} className="mx-auto mb-4" />
+          <h1 className="text-3xl font-display font-bold text-ink mb-2">
+            {t('brand.tagline')}
+          </h1>
+          <p className="text-muted text-sm">{t('brand.pitch')}</p>
         </div>
 
         {/* Formulario */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Crear Cuenta</h2>
+        <div className="bg-surface border border-edge rounded-2xl p-8">
+          <h2 className="text-2xl font-display font-bold text-ink mb-6">{t('auth.registerTitle')}</h2>
 
-          {/* Error del Servidor (General) */}
           {serverError && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+            <div className="mb-4 p-3 bg-danger/10 border border-danger/30 text-danger rounded-xl text-sm">
               {serverError}
             </div>
           )}
 
           <form onSubmit={formik.handleSubmit}>
-            
-            {/* Campo: Username */}
+            {/* Username */}
             <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-2">Nombre de usuario</label>
+              <label className="block text-ink font-medium mb-2">{t('auth.username')}</label>
               <input
                 type="text"
                 name="username"
-                {...formik.getFieldProps('username')} // Esto conecta value, onChange y onBlur automáticamente
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                  formik.touched.username && formik.errors.username 
-                    ? 'border-red-500 focus:ring-red-200' 
-                    : 'border-gray-300 focus:ring-gray-800'
-                }`}
-                placeholder="gymbrox99"
+                {...formik.getFieldProps('username')}
+                className={inputClass(formik.touched.username, formik.errors.username)}
+                placeholder="anafit"
               />
-              {formik.touched.username && formik.errors.username && (
-                <p className="text-red-500 text-xs mt-1">{formik.errors.username}</p>
-              )}
+              {fieldError('username')}
             </div>
 
-            {/* Campos: Nombre y Apellido */}
+            {/* Nombre y Apellido */}
             <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label className="block text-gray-700 font-medium mb-2">Nombre</label>
-                    <input
-                        type="text"
-                        name="name"
-                        {...formik.getFieldProps('name')}
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                            formik.touched.name && formik.errors.name 
-                            ? 'border-red-500 focus:ring-red-200' 
-                            : 'border-gray-300 focus:ring-green-500' // Tu estilo original verde
-                        }`}
-                        placeholder="Juan"
-                    />
-                    {formik.touched.name && formik.errors.name && (
-                        <p className="text-red-500 text-xs mt-1">{formik.errors.name}</p>
-                    )}
-                </div>
-                <div>
-                    <label className="block text-gray-700 font-medium mb-2">Apellido</label>
-                    <input
-                        type="text"
-                        name="surname"
-                        {...formik.getFieldProps('surname')}
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                            formik.touched.surname && formik.errors.surname 
-                            ? 'border-red-500 focus:ring-red-200' 
-                            : 'border-gray-300 focus:ring-green-500'
-                        }`}
-                        placeholder="Pérez"
-                    />
-                    {formik.touched.surname && formik.errors.surname && (
-                        <p className="text-red-500 text-xs mt-1">{formik.errors.surname}</p>
-                    )}
-                </div>
+              <div>
+                <label className="block text-ink font-medium mb-2">{t('auth.name')}</label>
+                <input
+                  type="text"
+                  name="name"
+                  {...formik.getFieldProps('name')}
+                  className={inputClass(formik.touched.name, formik.errors.name)}
+                  placeholder="Ana"
+                />
+                {fieldError('name')}
+              </div>
+              <div>
+                <label className="block text-ink font-medium mb-2">{t('auth.surname')}</label>
+                <input
+                  type="text"
+                  name="surname"
+                  {...formik.getFieldProps('surname')}
+                  className={inputClass(formik.touched.surname, formik.errors.surname)}
+                  placeholder="Pérez"
+                />
+                {fieldError('surname')}
+              </div>
             </div>
 
-            {/* Campo: Email */}
+            {/* Email */}
             <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-2">Email</label>
+              <label className="block text-ink font-medium mb-2">{t('auth.email')}</label>
               <input
                 type="email"
                 name="email"
                 {...formik.getFieldProps('email')}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                  formik.touched.email && formik.errors.email 
-                    ? 'border-red-500 focus:ring-red-200' 
-                    : 'border-gray-300 focus:ring-green-500'
-                }`}
+                className={inputClass(formik.touched.email, formik.errors.email)}
                 placeholder="tu@email.com"
               />
-              {formik.touched.email && formik.errors.email && (
-                <p className="text-red-500 text-xs mt-1">{formik.errors.email}</p>
-              )}
+              {fieldError('email')}
             </div>
 
-            {/* Campo: Password */}
+            {/* Password */}
             <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-2">Contraseña</label>
+              <label className="block text-ink font-medium mb-2">{t('auth.password')}</label>
               <input
                 type="password"
                 name="password"
                 {...formik.getFieldProps('password')}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                  formik.touched.password && formik.errors.password 
-                    ? 'border-red-500 focus:ring-red-200' 
-                    : 'border-gray-300 focus:ring-green-500'
-                }`}
+                className={inputClass(formik.touched.password, formik.errors.password)}
                 placeholder="••••••••"
               />
-              {formik.touched.password && formik.errors.password && (
-                <p className="text-red-500 text-xs mt-1">{formik.errors.password}</p>
-              )}
+              {fieldError('password')}
             </div>
 
-            {/* Campo: Confirm Password */}
+            {/* Confirm Password */}
             <div className="mb-6">
-              <label className="block text-gray-700 font-medium mb-2">Confirmar contraseña</label>
+              <label className="block text-ink font-medium mb-2">{t('auth.confirmPassword')}</label>
               <input
                 type="password"
                 name="confirmPassword"
                 {...formik.getFieldProps('confirmPassword')}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                  formik.touched.confirmPassword && formik.errors.confirmPassword 
-                    ? 'border-red-500 focus:ring-red-200' 
-                    : 'border-gray-300 focus:ring-green-500'
-                }`}
+                className={inputClass(formik.touched.confirmPassword, formik.errors.confirmPassword)}
                 placeholder="••••••••"
               />
-              {formik.touched.confirmPassword && formik.errors.confirmPassword && (
-                <p className="text-red-500 text-xs mt-1">{formik.errors.confirmPassword}</p>
-              )}
+              {fieldError('confirmPassword')}
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#E50914] text-white py-3 rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-accent hover:bg-accent-hi text-on-accent py-3 rounded-full font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
+              {loading ? t('auth.creating') : t('auth.registerBtn')}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-600">
-              ¿Ya tienes cuenta?{' '}
-              <Link to="/login" className="text-gray-900 font-semibold hover:underline">
-                Inicia sesión aquí
+            <p className="text-muted text-sm">
+              {t('auth.haveAccount')}{' '}
+              <Link to="/login" className="text-accent font-semibold hover:underline">
+                {t('auth.loginHere')}
               </Link>
             </p>
           </div>

@@ -10,7 +10,19 @@ const routineRoutes = require("./routes/routineRoutes");
 
 const app = express();
 
-app.use(cors());
+// CORS: con ALLOWED_ORIGINS (lista separada por comas, ej. "https://forma.app,http://localhost:3000")
+// solo esos orígenes pueden llamar a la API; sin la variable queda abierto (modo dev).
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
+
+if (allowedOrigins.length > 0) {
+  app.use(cors({ origin: allowedOrigins }));
+} else {
+  console.warn('⚠️  CORS abierto a cualquier origen. Definí ALLOWED_ORIGINS en producción.');
+  app.use(cors());
+}
 app.use(express.json());
 
 // Rutas
@@ -20,7 +32,7 @@ app.use("/api/exercises", exerciseRoutes);
 app.use("/api/routines", routineRoutes);
 // Test de conexión
 app.get('/', (req, res) => {
-  res.send('GymBro API funcionando ');
+  res.send('Forma API funcionando');
 });
 
 // Puerto: Railway (u otro host) inyecta process.env.PORT; en local cae a 3001

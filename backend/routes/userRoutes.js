@@ -4,6 +4,8 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const { authMiddleware, SECRET_KEY } = require('../middleware/authMiddleware');
 const { User, Follower, Post } = require("../models/index");
+const { upload, uploadFileToSupabase } = require('../services/uploadService');
+const { TOPICS } = require('../constants/topics');
 
 router.post('/register', userController.register);
 router.post('/login', userController.login);
@@ -11,31 +13,68 @@ router.post('/login', userController.login);
 // ==================================================
 // PUT /profile → Actualizar perfil propio (requiere JWT)
 // ==================================================
-router.put("/profile", authMiddleware, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { name, surname, bio, profile_pic, cover_pic } = req.body;
+// Acepta JSON (campos de texto) o multipart con archivos 'avatar' y/o 'cover'
+// (multer ignora las requests que no son multipart, así que el JSON sigue funcionando).
+router.put(
+  "/profile",
+  authMiddleware,
+  upload.fields([{ name: 'avatar', maxCount: 1 }, { name: 'cover', maxCount: 1 }]),
+  async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { name, surname, bio, profile_pic, cover_pic } = req.body;
 
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).json({ message: "Usuario no encontrado." });
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Usuario no encontrado." });
+      }
+
+      // Intereses: llegan como JSON string (FormData) o array (JSON); solo slugs conocidos
+      let interests;
+      if (req.body.interests !== undefined) {
+        try {
+          const parsed = typeof req.body.interests === 'string'
+            ? JSON.parse(req.body.interests)
+            : req.body.interests;
+          if (!Array.isArray(parsed)) throw new Error('not an array');
+          interests = parsed.filter(topic => TOPICS.includes(topic));
+        } catch (e) {
+          return res.status(400).json({ message: "Formato de intereses inválido." });
+        }
+      }
+
+      // Subir imágenes nuevas a Supabase (solo imágenes; los videos no son avatares)
+      let avatarUrl = null;
+      let coverUrl = null;
+      const avatarFile = req.files?.avatar?.[0];
+      const coverFile = req.files?.cover?.[0];
+      if (avatarFile || coverFile) {
+        for (const f of [avatarFile, coverFile]) {
+          if (f && !f.mimetype.startsWith('image/')) {
+            return res.status(400).json({ message: "Las fotos de perfil deben ser imágenes." });
+          }
+        }
+        if (avatarFile) avatarUrl = await uploadFileToSupabase(avatarFile, 'gymbro-posts');
+        if (coverFile) coverUrl = await uploadFileToSupabase(coverFile, 'gymbro-posts');
+      }
+
+      await user.update({
+        name: name ?? user.name,
+        surname: surname ?? user.surname,
+        bio: bio ?? user.bio,
+        profile_pic: avatarUrl ?? profile_pic ?? user.profile_pic,
+        cover_pic: coverUrl ?? cover_pic ?? user.cover_pic,
+        interests: interests ?? user.interests
+      });
+
+      const { password, ...safeUser } = user.toJSON();
+      res.json({ message: "Perfil actualizado correctamente.", user: safeUser });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error al actualizar el perfil." });
     }
-
-    // Actualizar datos básicos
-    await user.update({
-      name: name ?? user.name,
-      surname: surname ?? user.surname,
-      bio: bio ?? user.bio,
-      profile_pic: profile_pic ?? user.profile_pic,
-      cover_pic: cover_pic ?? user.cover_pic
-    });
-
-    res.json({ message: "Perfil actualizado correctamente.", user });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al actualizar el perfil." });
   }
-});
+);
 
 // ==================================================
 // POST /:id/follow → Seguir o dejar de seguir a otro usuario
@@ -116,6 +155,7 @@ router.get("/profile/:username", async (req, res) => {
         "bio",
         "profile_pic",
         "cover_pic",
+        "interests",
         "role",
       ],
       include: [

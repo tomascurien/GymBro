@@ -2,9 +2,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
+import { LogoMark } from '../components/Logo';
+import { useI18n } from '../i18n/I18nContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -28,84 +31,83 @@ const Login = () => {
 
     try {
       const response = await authAPI.login(formData);
-      
-      // Guardar token
+
       const token = response.data.token;
       if (!token) {
-        throw new Error('No se recibió token del servidor');
+        throw new Error(t('auth.noToken'));
       }
       localStorage.setItem('token', token);
-      
-      // Guardar usuario completo
+
       const userData = response.data.user;
       if (!userData || !userData.username) {
-        throw new Error('Datos de usuario incompletos');
+        throw new Error(t('auth.badUserData'));
       }
       localStorage.setItem('user', JSON.stringify(userData));
-      
-      // Disparar evento para que otros componentes se actualicen
-      window.dispatchEvent(new Event('userLoggedIn'));
-      
-      // Navegar al feed
+
+      // Navegar antes del evento (mismo orden que Register: evita que PublicRoute
+      // redirija por re-render mientras seguimos en la ruta pública)
       navigate('/feed', { replace: true });
-      
+      window.dispatchEvent(new Event('userLoggedIn'));
+
     } catch (err) {
       console.error('Error en login:', err);
-      setError(err.response?.data?.message || err.message || 'Error al iniciar sesión');
+      setError(err.response?.data?.message || err.message || t('auth.loginError'));
     } finally {
       setLoading(false);
     }
   };
 
+  const inputClass =
+    'w-full px-4 py-3 border border-edge rounded-xl bg-raised text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-accent';
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br bg-from-gray-900 to-gray-800 px-4">
-      <div className="max-w-md w-full">
-        {/* Logo y título */}
+    <div className="min-h-screen flex items-center justify-center bg-canvas px-4">
+      <div className="max-w-md w-full animate-fade-up">
+        {/* Logo y campaña */}
         <div className="text-center mb-8">
-          <img
-              src="/GymBro_banner.png"
-              alt="GymBro logo"
-              className="mx-auto h-36 w-auto object-contain rounded-xl shadow-lg mb-4 hover:scale-105 transition-transform duration-300"
-            />
-          <p className="text-gray-600">Únete a la comunidad fitness</p>
+          <LogoMark size={64} className="mx-auto mb-4" />
+          <h1 className="text-3xl font-display font-bold text-ink mb-2">
+            {t('brand.tagline')}
+          </h1>
+          <p className="text-muted text-sm">{t('brand.pitch')}</p>
         </div>
 
         {/* Formulario */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Iniciar Sesión</h2>
+        <div className="bg-surface border border-edge rounded-2xl p-8">
+          <h2 className="text-2xl font-display font-bold text-ink mb-6">{t('auth.loginTitle')}</h2>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <div className="mb-4 p-3 bg-danger/10 border border-danger/30 text-danger rounded-xl text-sm">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-2">
-                Email
+              <label className="block text-ink font-medium mb-2">
+                {t('auth.email')}
               </label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800"
+                className={inputClass}
                 placeholder="tu@email.com"
                 required
               />
             </div>
 
             <div className="mb-6">
-              <label className="block text-gray-700 font-medium mb-2">
-                Contraseña
+              <label className="block text-ink font-medium mb-2">
+                {t('auth.password')}
               </label>
               <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800"
+                className={inputClass}
                 placeholder="••••••••"
                 required
               />
@@ -114,17 +116,17 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#E50914] text-white py-3 rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-accent hover:bg-accent-hi text-on-accent py-3 rounded-full font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {loading ? t('auth.loggingIn') : t('auth.loginBtn')}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-600">
-              ¿No tienes cuenta?{' '}
-              <Link to="/register" className="text-gray-900 font-semibold hover:underline">
-                Regístrate aquí
+            <p className="text-muted text-sm">
+              {t('auth.noAccount')}{' '}
+              <Link to="/register" className="text-accent font-semibold hover:underline">
+                {t('auth.registerHere')}
               </Link>
             </p>
           </div>

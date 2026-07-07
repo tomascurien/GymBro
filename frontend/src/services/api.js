@@ -5,11 +5,10 @@ import axios from 'axios';
 // REACT_APP_API_URL en frontend/.env (ej: https://tu-app.up.railway.app/api)
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
+// No fijamos Content-Type global: axios lo infiere por request
+// (application/json para objetos; multipart/form-data con boundary para FormData / subida de archivos).
 const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Interceptor para agregar token
@@ -50,11 +49,13 @@ export const authAPI = {
 // Posts endpoints
 export const postsAPI = {
   getFeed: () => api.get(`/posts/feed`),
+  getForYouFeed: () => api.get(`/posts/for-you`),
   getFollowingFeed: () => api.get(`/posts/following`),
   getUserPosts: (username) => api.get(`/posts/user/${username}`),
   createPost: (data) => api.post('/posts', data),
   deletePost: (postId) => api.delete(`/posts/${postId}`),
-  // No hay like por ahora
+  likePost: (postId) => api.post(`/posts/${postId}/like`),
+  unlikePost: (postId) => api.delete(`/posts/${postId}/like`),
 };
 
 //Ejercicios endpoints

@@ -41,6 +41,11 @@ const User = sequelize.define('User', {
     allowNull: true,
   },
   // ------------------------
+  // Intereses para personalizar el feed "Para vos" (slugs de constants/topics.js)
+  interests: {
+    type: DataTypes.JSONB,
+    defaultValue: [],
+  },
   time_stamp: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
