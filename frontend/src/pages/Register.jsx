@@ -9,9 +9,12 @@ import { useI18n } from '../i18n/I18nContext';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
+  // Email al que se mandó el link de confirmación (muestra la pantalla "revisá tu correo")
+  const [pendingEmail, setPendingEmail] = useState(null);
+  const [resent, setResent] = useState(false);
 
   // Esquema de validación con Yup (mensajes traducidos)
   const validationSchema = Yup.object({
@@ -50,9 +53,11 @@ const Register = () => {
 
       try {
         const { confirmPassword, ...dataToSend } = values;
-        const response = await authAPI.register(dataToSend);
+        const response = await authAPI.register({ ...dataToSend, lang });
 
-        if (response.data.token) {
+        if (response.data.pendingVerification) {
+          setPendingEmail(response.data.email);
+        } else if (response.data.token) {
           localStorage.setItem('token', response.data.token);
           localStorage.setItem('user', JSON.stringify(response.data.user));
           // Navegar ANTES de disparar el evento: si el evento re-renderiza mientras
@@ -84,6 +89,43 @@ const Register = () => {
     formik.touched[name] && formik.errors[name] ? (
       <p className="text-danger text-xs mt-1">{formik.errors[name]}</p>
     ) : null;
+
+  const handleResend = async () => {
+    try {
+      await authAPI.resendVerification(pendingEmail, lang);
+      setResent(true);
+      setTimeout(() => setResent(false), 60000);
+    } catch (e) {
+      // Respuesta genérica igual; no hay error visible que mostrar
+    }
+  };
+
+  // Pantalla post-registro: "revisá tu correo"
+  if (pendingEmail) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-canvas px-4">
+        <div className="max-w-md w-full text-center animate-fade-up">
+          <LogoMark size={64} className="mx-auto mb-6" />
+          <div className="bg-surface border border-edge rounded-2xl p-8">
+            <div className="text-5xl mb-4">📬</div>
+            <h1 className="text-2xl font-display font-bold text-ink mb-2">{t('verify.checkTitle')}</h1>
+            <p className="text-muted mb-2">{t('verify.checkText', { email: pendingEmail })}</p>
+            <p className="text-muted text-sm mb-6">{t('verify.spamHint')}</p>
+            {resent ? (
+              <p className="text-accent font-medium">{t('verify.resent')}</p>
+            ) : (
+              <button
+                onClick={handleResend}
+                className="bg-raised text-ink border border-edge px-5 py-2.5 rounded-full font-medium hover:bg-edge/60 transition-colors"
+              >
+                {t('verify.resend')}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-canvas px-4 py-8">

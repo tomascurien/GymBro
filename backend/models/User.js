@@ -46,6 +46,14 @@ const User = sequelize.define('User', {
     type: DataTypes.JSONB,
     defaultValue: [],
   },
+  // Confirmación de correo. Default TRUE a propósito: las filas creadas antes
+  // de esta columna quedan "verificadas" al agregarse (usuarios existentes no
+  // se bloquean). El registro setea explícitamente false para usuarios nuevos
+  // cuando el envío de emails está configurado (ver userController/emailService).
+  email_verified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
   time_stamp: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,

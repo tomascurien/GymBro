@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Feed from './pages/Feed';
 import Profile from './pages/Profile';
+import VerifyEmail from './pages/VerifyEmail';
 import { useI18n } from './i18n/I18nContext';
 
 // Componente para rutas públicas (redirige al feed si ya está autenticado).
@@ -88,6 +89,9 @@ function App() {
             </PublicRoute>
           }
         />
+
+        {/* Confirmación de correo (link del email) */}
+        <Route path="/verify" element={<VerifyEmail />} />
 
         {/* Ruta Feed - PÚBLICA (accesible sin login) */}
         <Route path="/feed" element={<Feed />} />

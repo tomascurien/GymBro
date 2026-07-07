@@ -9,6 +9,8 @@ const { TOPICS } = require('../constants/topics');
 
 router.post('/register', userController.register);
 router.post('/login', userController.login);
+router.post('/verify', userController.verifyEmail);
+router.post('/resend-verification', userController.resendVerification);
 
 // ==================================================
 // PUT /profile → Actualizar perfil propio (requiere JWT)

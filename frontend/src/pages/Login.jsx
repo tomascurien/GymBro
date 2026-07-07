@@ -7,13 +7,15 @@ import { useI18n } from '../i18n/I18nContext';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resent, setResent] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -51,9 +53,24 @@ const Login = () => {
 
     } catch (err) {
       console.error('Error en login:', err);
-      setError(err.response?.data?.message || err.message || t('auth.loginError'));
+      if (err.response?.data?.needsVerification) {
+        setNeedsVerification(true);
+        setError(t('verify.needsVerification'));
+      } else {
+        setError(err.response?.data?.message || err.message || t('auth.loginError'));
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    try {
+      await authAPI.resendVerification(formData.email, lang);
+      setResent(true);
+      setTimeout(() => setResent(false), 60000);
+    } catch (e) {
+      // Respuesta genérica; nada que mostrar
     }
   };
 
@@ -79,6 +96,21 @@ const Login = () => {
           {error && (
             <div className="mb-4 p-3 bg-danger/10 border border-danger/30 text-danger rounded-xl text-sm">
               {error}
+              {needsVerification && (
+                <div className="mt-2">
+                  {resent ? (
+                    <span className="text-accent font-medium">{t('verify.resent')}</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResend}
+                      className="underline hover:no-underline font-medium"
+                    >
+                      {t('verify.resend')}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

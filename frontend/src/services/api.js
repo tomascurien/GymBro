@@ -43,7 +43,8 @@ api.interceptors.response.use(
 export const authAPI = {
   register: (data) => api.post('/users/register', data),
   login: (data) => api.post('/users/login', data),
-
+  verifyEmail: (token) => api.post('/users/verify', { token }),
+  resendVerification: (email, lang) => api.post('/users/resend-verification', { email, lang }),
 };
 
 // Posts endpoints

@@ -49,6 +49,20 @@ const es = {
   'auth.noToken': 'No se recibió token del servidor',
   'auth.badUserData': 'Datos de usuario incompletos',
 
+  // Verificación de correo
+  'verify.checkTitle': 'Revisá tu correo',
+  'verify.checkText': 'Te mandamos un enlace de confirmación a {email}. Abrilo para activar tu cuenta.',
+  'verify.spamHint': 'Si no aparece, revisá la carpeta de spam.',
+  'verify.resend': 'Reenviar correo',
+  'verify.resent': 'Correo reenviado.',
+  'verify.verifying': 'Confirmando tu correo...',
+  'verify.successTitle': '¡Correo confirmado!',
+  'verify.successText': 'Tu cuenta ya está activa. Te llevamos a tu perfil...',
+  'verify.errorTitle': 'No pudimos confirmar tu correo',
+  'verify.errorText': 'El enlace expiró o no es válido. Iniciá sesión para reenviarlo.',
+  'verify.goLogin': 'Ir a iniciar sesión',
+  'verify.needsVerification': 'Tu cuenta todavía no está confirmada. Revisá tu correo o reenviá el enlace.',
+
   // Validación (Register)
   'valid.usernameMin': 'El usuario debe tener al menos 3 caracteres',
   'valid.usernameRequired': 'El nombre de usuario es obligatorio',
@@ -230,6 +244,20 @@ const en = {
   'auth.accountCreated': 'Account created! Please log in.',
   'auth.noToken': 'No token received from server',
   'auth.badUserData': 'Incomplete user data',
+
+  // Email verification
+  'verify.checkTitle': 'Check your email',
+  'verify.checkText': 'We sent a confirmation link to {email}. Open it to activate your account.',
+  'verify.spamHint': "If it doesn't show up, check your spam folder.",
+  'verify.resend': 'Resend email',
+  'verify.resent': 'Email resent.',
+  'verify.verifying': 'Confirming your email...',
+  'verify.successTitle': 'Email confirmed!',
+  'verify.successText': 'Your account is active. Taking you to your profile...',
+  'verify.errorTitle': "We couldn't confirm your email",
+  'verify.errorText': 'The link expired or is invalid. Log in to resend it.',
+  'verify.goLogin': 'Go to login',
+  'verify.needsVerification': "Your account isn't confirmed yet. Check your email or resend the link.",
 
   // Validation (Register)
   'valid.usernameMin': 'Username must be at least 3 characters',
