@@ -68,6 +68,7 @@ export const exercisesAPI = {
 
 //Rutinas endpoints
 export const routinesAPI = {
+  getRoutine: (routineId) => api.get(`/routines/${routineId}`),
   getUserRoutines: (username) => api.get(`/routines/user/${username}`),
   createRoutine: (routineData) => api.post('/routines', routineData),
   deleteRoutine: (routineId) => api.delete(`/routines/${routineId}`),

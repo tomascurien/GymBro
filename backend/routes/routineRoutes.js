@@ -240,6 +240,35 @@ router.get("/user/:username", async (req, res) => {
     }
 });
 
+// GET /api/routines/:id — detalle completo de una rutina (público)
+router.get("/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(404).json({ message: "Rutina no encontrada." });
+
+    const routine = await Routine.findByPk(id, {
+      include: [
+        {
+          model: RoutineExercise,
+          include: [
+            { model: RoutineSet },
+            { model: Exercise, include: [ExerciseImage] },
+          ],
+        },
+        { model: User, attributes: ['username', 'name', 'surname', 'profile_pic'] },
+        SOURCE_INCLUDE,
+      ],
+    });
+    if (!routine) return res.status(404).json({ message: "Rutina no encontrada." });
+
+    const [annotated] = await annotateCopies([routine]);
+    res.json(annotated);
+  } catch (error) {
+    console.error("Error al obtener la rutina:", error);
+    res.status(500).json({ message: "Error al obtener la rutina." });
+  }
+});
+
 //POST /api/routines/:id/favorite
 router.post("/:id/favorite", authMiddleware, async (req, res) => {
   try {

@@ -254,6 +254,18 @@ const es = {
   'split.ppl': 'Por grupos musculares',
   'split.ppl.desc': '5-6 días · divisiones tipo push/pull/legs.',
 
+  // Detalle de rutina
+  'routineDetail.notFoundTitle': 'No encontramos esta rutina',
+  'routineDetail.notFoundText': 'Puede que haya sido eliminada.',
+  'routineDetail.by': 'de',
+  'routineDetail.exerciseCount': '{n} ejercicios',
+  'routineDetail.exerciseOne': '1 ejercicio',
+  'routineDetail.noDescription': 'Sin descripción disponible.',
+  'routineDetail.deleteConfirmTitle': '¿Eliminar rutina?',
+  'routineDetail.deleteConfirmText': 'Esta acción no se puede deshacer.',
+  'routineDetail.saved': 'Guardada',
+  'routineDetail.save': 'Guardar',
+
   // Grupos musculares (IDs de Wger)
   'muscle.10': 'Abdominales',
   'muscle.8': 'Brazos',
@@ -519,6 +531,18 @@ const en = {
   'split.upperlower.desc': '4 days · alternate upper and lower body.',
   'split.ppl': 'Muscle group split',
   'split.ppl.desc': '5-6 days · push/pull/legs style splits.',
+
+  // Routine detail
+  'routineDetail.notFoundTitle': "We couldn't find this routine",
+  'routineDetail.notFoundText': 'It may have been deleted.',
+  'routineDetail.by': 'by',
+  'routineDetail.exerciseCount': '{n} exercises',
+  'routineDetail.exerciseOne': '1 exercise',
+  'routineDetail.noDescription': 'No description available.',
+  'routineDetail.deleteConfirmTitle': 'Delete routine?',
+  'routineDetail.deleteConfirmText': 'This action cannot be undone.',
+  'routineDetail.saved': 'Saved',
+  'routineDetail.save': 'Save',
 
   // Muscle groups (Wger IDs)
   'muscle.10': 'Abs',

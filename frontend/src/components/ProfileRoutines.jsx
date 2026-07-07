@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { routinesAPI } from '../services/api';
 import { useI18n } from '../i18n/I18nContext';
+import { MUSCLE_EMOJI } from '../constants/muscles';
 
 const BookmarkIcon = ({ isFavorited, isLoggedIn, ...props }) => (
   <button
@@ -26,38 +27,6 @@ const BookmarkIcon = ({ isFavorited, isLoggedIn, ...props }) => (
     </svg>
   </button>
 );
-
-// El item de ejercicio (dentro de la tarjeta)
-const RoutineExerciseItem = ({ exercise }) => {
-  const { t } = useI18n();
-  return (
-    <li className="py-3 sm:py-4">
-      <div className="flex items-center space-x-4">
-        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-raised flex items-center justify-center overflow-hidden">
-          <img
-            src={exercise.Exercise.ExerciseImages?.[0]?.image_url || 'https://placehold.co/40x40/e2e8f0/64748b?text=?'}
-            alt={exercise.Exercise.name.charAt(0)}
-            className="w-10 h-10 object-cover rounded-full"
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-md font-medium text-ink truncate">
-            {exercise.Exercise.name}
-          </p>
-          <p className="text-sm text-muted truncate">
-            {t('routine.setsCount', { n: exercise.RoutineSets.length })}
-          </p>
-        </div>
-        <div className="inline-flex items-center text-base font-semibold text-ink">
-          {t('routine.repsCount', { n: exercise.reps })}
-        </div>
-        <div className="inline-flex items-center text-base font-semibold text-ink">
-          {exercise.weight_kg} kg
-        </div>
-      </div>
-    </li>
-  );
-};
 
 // Botón "copiar rutina" (para rutinas ajenas): la clona a mis rutinas con atribución
 const CopyButton = ({ routineId }) => {
@@ -101,9 +70,11 @@ const CopyButton = ({ routineId }) => {
   );
 };
 
-// La tarjeta de rutina
+// Tarjeta compacta de rutina: resumen + acciones; el contenido completo
+// vive en la página de detalle (/routines/:id)
 const RoutineCard = ({ routine, onRoutineDelete, onFavoriteToggle, myFavoriteIds, isLoggedIn }) => {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const userStr = localStorage.getItem('user');
   const currentUser = userStr ? JSON.parse(userStr) : {};
   const isMyRoutine = routine.user_id === currentUser.id;
@@ -111,54 +82,83 @@ const RoutineCard = ({ routine, onRoutineDelete, onFavoriteToggle, myFavoriteIds
 
   const copies = routine.copies_count || 0;
   const sourceUser = routine.SourceRoutine?.User;
-
-  // Agrupar ejercicios por día (rutinas viejas: todo en día 1 → lista plana)
-  const byDay = {};
-  (routine.RoutineExercises || []).forEach((ex) => {
-    const d = ex.day || 1;
-    (byDay[d] = byDay[d] || []).push(ex);
-  });
-  const dayNumbers = Object.keys(byDay).map(Number).sort((a, b) => a - b);
-  const multiDay = dayNumbers.length > 1;
+  const author = routine.User;
+  const exercises = routine.RoutineExercises || [];
+  // Grupos musculares presentes, en orden de aparición
+  const groupIds = [...new Set(exercises.map((ex) => ex.Exercise?.category).filter(Boolean))];
 
   return (
-    <div className="bg-surface border border-edge rounded-2xl p-6 mb-6">
-      <div className="flex justify-between items-start mb-4 gap-3">
+    <div
+      onClick={() => navigate(`/routines/${routine.id}`)}
+      className="bg-surface border border-edge rounded-2xl p-5 mb-4 cursor-pointer hover:border-accent/50 transition-colors group"
+    >
+      <div className="flex justify-between items-start gap-3">
         <div className="min-w-0">
-          <h3 className="text-xl font-display font-bold text-ink truncate">{routine.title}</h3>
-          {/* Objetivo y frecuencia (rutinas creadas con el wizard) */}
-          {(routine.objective || routine.days_per_week) && (
-            <div className="flex flex-wrap gap-1.5 mt-1.5">
-              {routine.objective && (
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent">
-                  {t(`objective.${routine.objective}`)}
-                </span>
-              )}
-              {routine.days_per_week && (
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-raised text-muted border border-edge">
-                  {t('wizard.daysChip', { n: routine.days_per_week })}
-                </span>
-              )}
-            </div>
+          <h3 className="text-lg font-display font-bold text-ink truncate group-hover:text-accent transition-colors">
+            {routine.title}
+          </h3>
+
+          {/* Autor (en listas de guardadas) y atribución */}
+          {author && !isMyRoutine && (
+            <p className="text-sm text-muted mt-0.5">
+              {t('routineDetail.by')}{' '}
+              <Link
+                to={`/profile/${author.username}`}
+                onClick={(e) => e.stopPropagation()}
+                className="hover:text-ink hover:underline"
+              >
+                @{author.username}
+              </Link>
+            </p>
           )}
-          {/* Atribución: esta rutina nació como copia de otra */}
           {sourceUser && (
             <p className="text-sm text-muted mt-0.5">
               {t('routines.basedOn')}{' '}
-              <Link to={`/profile/${sourceUser.username}`} className="text-accent hover:underline">
+              <Link
+                to={`/profile/${sourceUser.username}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-accent hover:underline"
+              >
                 @{sourceUser.username}
               </Link>
             </p>
           )}
-          {/* Alcance: cuántas veces la copiaron */}
-          {copies > 0 && (
-            <p className="text-xs text-muted mt-0.5">
-              {copies === 1 ? t('routines.copyOne') : t('routines.copies', { n: copies })}
-            </p>
+
+          {/* Badges de resumen */}
+          <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+            {routine.objective && (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent">
+                {t(`objective.${routine.objective}`)}
+              </span>
+            )}
+            {routine.days_per_week && (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-raised text-muted border border-edge">
+                {t('wizard.daysChip', { n: routine.days_per_week })}
+              </span>
+            )}
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-raised text-muted border border-edge">
+              {exercises.length === 1
+                ? t('routineDetail.exerciseOne')
+                : t('routineDetail.exerciseCount', { n: exercises.length })}
+            </span>
+            {copies > 0 && (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-raised text-muted border border-edge">
+                {copies === 1 ? t('routines.copyOne') : t('routines.copies', { n: copies })}
+              </span>
+            )}
+          </div>
+
+          {/* Grupos musculares que toca */}
+          {groupIds.length > 0 && (
+            <div className="flex items-center gap-1 mt-2.5 text-lg">
+              {groupIds.map((gid) => (
+                <span key={gid} title={t(`muscle.${gid}`)}>{MUSCLE_EMOJI[gid] || '🏋️'}</span>
+              ))}
+            </div>
           )}
         </div>
 
-        <div className="flex items-center space-x-1 shrink-0">
+        <div className="flex items-center space-x-1 shrink-0" onClick={(e) => e.stopPropagation()}>
           {(isMyRoutine || isAdmin) ? (
             <button
               onClick={() => onRoutineDelete(routine.id)}
@@ -178,27 +178,6 @@ const RoutineCard = ({ routine, onRoutineDelete, onFavoriteToggle, myFavoriteIds
           )}
         </div>
       </div>
-
-      {multiDay ? (
-        dayNumbers.map((d) => (
-          <div key={d} className="mt-3 first:mt-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-accent mb-1">
-              {t('wizard.day', { n: d })}
-            </p>
-            <ul className="divide-y divide-edge">
-              {byDay[d].sort((a, b) => a.index - b.index).map((exercise) => (
-                <RoutineExerciseItem key={exercise.id} exercise={exercise} />
-              ))}
-            </ul>
-          </div>
-        ))
-      ) : (
-        <ul className="divide-y divide-edge">
-          {(routine.RoutineExercises || []).sort((a, b) => a.index - b.index).map((exercise) => (
-            <RoutineExerciseItem key={exercise.id} exercise={exercise} />
-          ))}
-        </ul>
-      )}
     </div>
   );
 };

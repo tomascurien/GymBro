@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import Feed from './pages/Feed';
 import Profile from './pages/Profile';
 import Routines from './pages/Routines';
+import RoutineDetail from './pages/RoutineDetail';
 import SavedRoutines from './pages/SavedRoutines';
 import LikedPosts from './pages/LikedPosts';
 import VerifyEmail from './pages/VerifyEmail';
@@ -115,6 +116,7 @@ function App() {
 
         {/* Ruta Feed - PÚBLICA (accesible sin login) */}
         <Route path="/feed" element={<Feed />} />
+        <Route path="/routines/:id" element={<RoutineDetail />} />
 
         {/* Secciones del sidebar */}
         <Route path="/routines" element={<Routines />} />

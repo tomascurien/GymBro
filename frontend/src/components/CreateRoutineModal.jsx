@@ -5,6 +5,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { exercisesAPI, routinesAPI } from '../services/api';
 import { useI18n } from '../i18n/I18nContext';
+import { MUSCLE_GROUPS } from '../constants/muscles';
 
 const OBJECTIVES = [
   { slug: 'hypertrophy', emoji: '💪' },
@@ -18,17 +19,6 @@ const SPLITS = [
   { slug: 'fullbody', emoji: '🧍', days: [2, 3], defaultDays: 3 },
   { slug: 'upperlower', emoji: '⚖️', days: [4], defaultDays: 4 },
   { slug: 'ppl', emoji: '🗓️', days: [5, 6], defaultDays: 5 },
-];
-
-// IDs de grupos musculares de Wger (labels en i18n: muscle.<id>)
-const MUSCLE_GROUPS = [
-  { id: 11, emoji: '🛡️' }, // Pecho
-  { id: 12, emoji: '🦅' }, // Espalda
-  { id: 9, emoji: '🦵' },  // Piernas
-  { id: 13, emoji: '⛰️' }, // Hombros
-  { id: 8, emoji: '💪' },  // Brazos
-  { id: 10, emoji: '🧘' }, // Abdominales
-  { id: 14, emoji: '🦶' }, // Pantorrillas
 ];
 
 const OptionCard = ({ selected, onClick, emoji, title, desc, children }) => (
