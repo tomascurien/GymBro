@@ -5,7 +5,8 @@ const { authMiddleware, SECRET_KEY } = require('../middleware/authMiddleware');
 const { Post, User, Follower, Like } = require("../models/index");
 const { Op } = require("sequelize");
 const { upload, uploadFileToSupabase } = require('../services/uploadService');
-const { TOPICS } = require('../constants/topics');
+const { TOPICS, TAG_TO_TOPIC } = require('../constants/topics');
+const { extractHashtags } = require('../utils/hashtags');
 
 // Auth opcional: si viene un token válido setea req.user, si no sigue como anónimo.
 // Lo usamos en los feeds públicos para poder marcar isLiked y boostear seguidos.
@@ -70,7 +71,8 @@ router.post("/", authMiddleware, upload.single('media'), async (req, res) => {
       text: text || '',
       media_url: mediaUrl,
       media_type: mediaType,
-      topic: TOPICS.includes(topic) ? topic : null
+      topic: TOPICS.includes(topic) ? topic : null,
+      hashtags: extractHashtags(text)
     });
 
     const postWithUser = await Post.findOne({
@@ -150,25 +152,58 @@ router.get("/for-you", optionalAuth, async (req, res) => {
 
     let followedIds = new Set();
     let interests = new Set();
+    const tasteTags = new Map(); // tag/tema -> peso, aprendido de tus likes
     if (userId) {
-      const [following, me] = await Promise.all([
+      const [following, me, myLikes] = await Promise.all([
         Follower.findAll({
           where: { follower_id: userId },
           attributes: ['followed_id'],
         }),
         User.findByPk(userId, { attributes: ['interests'] }),
+        Like.findAll({
+          where: { user_id: userId },
+          order: [['id', 'DESC']],
+          limit: 100,
+          attributes: ['post_id'],
+        }),
       ]);
       followedIds = new Set(following.map(f => f.followed_id));
       interests = new Set(Array.isArray(me?.interests) ? me.interests : []);
+
+      if (myLikes.length) {
+        const likedPosts = await Post.findAll({
+          where: { id: { [Op.in]: myLikes.map(l => l.post_id) } },
+          attributes: ['hashtags', 'topic'],
+        });
+        likedPosts.forEach(p => {
+          (Array.isArray(p.hashtags) ? p.hashtags : []).forEach(h =>
+            tasteTags.set(h, (tasteTags.get(h) || 0) + 1));
+          if (p.topic) tasteTags.set(p.topic, (tasteTags.get(p.topic) || 0) + 1);
+        });
+      }
     }
 
     const now = Date.now();
     const scored = candidates.map(p => {
       const post = p.get({ plain: true });
+      const tags = Array.isArray(post.hashtags) ? post.hashtags : [];
       const ageHours = Math.max((now - new Date(post.created_at).getTime()) / 36e5, 0);
       let score = ((post.likes_count || 0) * 3 + 1) / Math.pow(ageHours + 2, 1.5);
       if (followedIds.has(post.user_id)) score *= 1.75;
-      if (post.topic && interests.has(post.topic)) score *= 1.5;
+
+      // Interés explícito: el tema del post, o un hashtag que mapea a un tema
+      // que te interesa (#hopecore -> motivation, #gymtok -> gym, ...)
+      const interestHit =
+        (post.topic && interests.has(post.topic)) ||
+        tags.some(tag => interests.has(TAG_TO_TOPIC[tag] || tag));
+      if (interestHit) score *= 1.5;
+
+      // Gusto implícito: solapamiento de tags/tema con lo que likeaste (acotado)
+      let overlap = 0;
+      tags.forEach(tag => { overlap += tasteTags.get(tag) || 0; });
+      if (post.topic) overlap += tasteTags.get(post.topic) || 0;
+      if (overlap) score *= 1 + Math.min(0.8, 0.15 * overlap);
+
       if (post.user_id === userId) score *= 0.8; // tu propio contenido, un poco menos
       if (post.media_type && post.media_type !== 'none') score *= 1.15;
       return { post, score };
@@ -213,11 +248,37 @@ router.get("/following", authMiddleware, async (req, res) => {
   }
 });
 
-//  Feed global cronológico (Reciente)
+// Hashtags en tendencia: frecuencia + likes sobre los últimos 200 posts
+router.get("/trending", async (req, res) => {
+  try {
+    const recent = await Post.findAll({
+      order: [["id", "DESC"]],
+      limit: 200,
+      attributes: ['hashtags', 'likes_count'],
+    });
+    const counts = new Map();
+    recent.forEach(p => {
+      (Array.isArray(p.hashtags) ? p.hashtags : []).forEach(tag =>
+        counts.set(tag, (counts.get(tag) || 0) + 1 + (p.likes_count || 0)));
+    });
+    const top = [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([tag, weight]) => ({ tag, weight }));
+    res.json(top);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener tendencias." });
+  }
+});
+
+//  Feed global cronológico (Reciente); acepta ?tag= para filtrar por hashtag
 router.get("/feed", optionalAuth, async (req, res) => {
   try {
     const { limit, offset } = parsePagination(req);
+    const tag = req.query.tag ? String(req.query.tag).toLowerCase() : null;
     const posts = await Post.findAll({
+      where: tag ? { hashtags: { [Op.contains]: [tag] } } : undefined,
       include: [{ model: User, attributes: USER_ATTRS }],
       order: [["id", "DESC"]],
       limit,

@@ -41,6 +41,11 @@ const Post = sequelize.define("Post", {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  // Hashtags extraídos del texto (minúsculas, sin #); alimentan trending y "Para vos"
+  hashtags: {
+    type: DataTypes.JSONB,
+    defaultValue: [],
+  },
 }, {
   tableName: "posts",
   timestamps: false,

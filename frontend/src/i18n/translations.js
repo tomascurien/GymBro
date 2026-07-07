@@ -76,6 +76,10 @@ const es = {
   'feed.loadError': 'Error al cargar el feed',
   'feed.postCount': '{count} publicación',
   'feed.postCountPlural': '{count} publicaciones',
+  'feed.trending': 'Tendencias',
+  'feed.showingTag': 'Viendo #{tag}',
+  'feed.clearFilter': 'Ver todo',
+  'feed.emptyTag': 'Todavía no hay publicaciones con #{tag}.',
 
   // Post
   'post.justNow': 'Justo ahora',
@@ -254,6 +258,10 @@ const en = {
   'feed.loadError': 'Could not load the feed',
   'feed.postCount': '{count} post',
   'feed.postCountPlural': '{count} posts',
+  'feed.trending': 'Trending',
+  'feed.showingTag': 'Showing #{tag}',
+  'feed.clearFilter': 'See all',
+  'feed.emptyTag': 'No posts with #{tag} yet.',
 
   // Post
   'post.justNow': 'Just now',

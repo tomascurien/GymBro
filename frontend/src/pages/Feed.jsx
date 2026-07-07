@@ -1,6 +1,6 @@
 // frontend/src/pages/Feed.jsx
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import PostCard from '../components/PostCard';
 import CreatePostModal from '../components/CreatePostModal';
 import { postsAPI } from '../services/api';
@@ -8,7 +8,10 @@ import { useI18n } from '../i18n/I18nContext';
 
 const Feed = () => {
   const { t } = useI18n();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTag = searchParams.get('tag');
   const [posts, setPosts] = useState([]);
+  const [trending, setTrending] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [error, setError] = useState('');
@@ -18,7 +21,13 @@ const Feed = () => {
   useEffect(() => {
     loadFeed();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, activeTag]);
+
+  useEffect(() => {
+    postsAPI.getTrending()
+      .then((res) => setTrending(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     // Escuchar cambios de autenticación
@@ -47,7 +56,10 @@ const Feed = () => {
       setError('');
 
       let response;
-      if (activeTab === 'following') {
+      if (activeTag) {
+        // Filtro por hashtag: cronológico con ese tag
+        response = await postsAPI.getFeed(activeTag);
+      } else if (activeTab === 'following') {
         response = await postsAPI.getFollowingFeed();
       } else if (activeTab === 'recent') {
         response = await postsAPI.getFeed();
@@ -138,25 +150,62 @@ const Feed = () => {
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="mb-6 bg-surface border border-edge rounded-2xl overflow-hidden">
-          <nav className="flex" aria-label="Tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`
-                  ${activeTab === tab.key
-                    ? 'border-accent text-ink font-semibold'
-                    : 'border-transparent text-muted hover:text-ink'}
-                  flex-1 whitespace-nowrap py-3.5 px-1 border-b-2 text-sm transition-colors
-                `}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
+        {/* Tendencias */}
+        {trending.length > 0 && !activeTag && (
+          <div className="mb-6 bg-surface border border-edge rounded-2xl p-4">
+            <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-2.5">
+              {t('feed.trending')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {trending.map(({ tag }) => (
+                <button
+                  key={tag}
+                  onClick={() => setSearchParams({ tag })}
+                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-raised text-accent border border-edge hover:border-accent/50 transition-colors"
+                >
+                  #{tag}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Filtro activo por hashtag */}
+        {activeTag && (
+          <div className="mb-6 bg-surface border border-edge rounded-2xl p-4 flex items-center justify-between">
+            <p className="font-display font-semibold text-ink">
+              {t('feed.showingTag', { tag: activeTag })}
+            </p>
+            <button
+              onClick={() => setSearchParams({})}
+              className="text-sm text-muted hover:text-ink px-3 py-1.5 rounded-full hover:bg-raised transition-colors"
+            >
+              {t('feed.clearFilter')} ✕
+            </button>
+          </div>
+        )}
+
+        {/* Tabs (ocultas mientras hay filtro por tag) */}
+        {!activeTag && (
+          <div className="mb-6 bg-surface border border-edge rounded-2xl overflow-hidden">
+            <nav className="flex" aria-label="Tabs">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`
+                    ${activeTab === tab.key
+                      ? 'border-accent text-ink font-semibold'
+                      : 'border-transparent text-muted hover:text-ink'}
+                    flex-1 whitespace-nowrap py-3.5 px-1 border-b-2 text-sm transition-colors
+                  `}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        )}
 
         {/* Errores */}
         {error && (
@@ -180,7 +229,9 @@ const Feed = () => {
               {t('feed.emptyTitle')}
             </h3>
             <p className="text-muted mb-4">
-              {isLoggedIn ? t('feed.emptyLoggedIn') : t('feed.emptyLoggedOut')}
+              {activeTag
+                ? t('feed.emptyTag', { tag: activeTag })
+                : isLoggedIn ? t('feed.emptyLoggedIn') : t('feed.emptyLoggedOut')}
             </p>
             {isLoggedIn && (
               <button

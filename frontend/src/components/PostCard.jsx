@@ -99,6 +99,25 @@ const PostCard = ({ post, onDelete, onLikeUpdate }) => {
   const isOwner = currentUser.id === post.user_id;
   const isAdmin = currentUser.role === 'admin';
 
+  // Hashtags del texto como links: clic -> feed filtrado por ese tag
+  const renderText = (text) =>
+    text.split(/(#[\p{L}\p{N}_]+)/gu).map((part, i) =>
+      part.startsWith('#') ? (
+        <span
+          key={i}
+          className="text-accent hover:underline cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/feed?tag=${encodeURIComponent(part.slice(1).toLowerCase())}`);
+          }}
+        >
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+
   // Priorizamos 'media_url' (nuevo sistema), 'image' queda por compatibilidad
   const mediaSource = post.media_url || post.image;
   const isVideo = post.media_type === 'video';
@@ -146,7 +165,7 @@ const PostCard = ({ post, onDelete, onLikeUpdate }) => {
       {/* Texto */}
       {post.text && (
         <div className="px-4 pb-3">
-          <p className="text-ink whitespace-pre-wrap text-base leading-relaxed">{post.text}</p>
+          <p className="text-ink whitespace-pre-wrap text-base leading-relaxed">{renderText(post.text)}</p>
         </div>
       )}
 

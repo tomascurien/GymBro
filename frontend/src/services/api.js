@@ -48,8 +48,9 @@ export const authAPI = {
 
 // Posts endpoints
 export const postsAPI = {
-  getFeed: () => api.get(`/posts/feed`),
+  getFeed: (tag) => api.get(`/posts/feed`, { params: tag ? { tag } : {} }),
   getForYouFeed: () => api.get(`/posts/for-you`),
+  getTrending: () => api.get(`/posts/trending`),
   getFollowingFeed: () => api.get(`/posts/following`),
   getUserPosts: (username) => api.get(`/posts/user/${username}`),
   createPost: (data) => api.post('/posts', data),
