@@ -3,8 +3,9 @@ const nodemailer = require('nodemailer');
 // Envío de correos vía Gmail SMTP (app password). La verificación de email
 // solo se activa si hay credenciales configuradas; con EMAIL_DEBUG=true se
 // "envía" logueando el link a consola (para desarrollo sin SMTP).
-const GMAIL_USER = process.env.GMAIL_USER;
-const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
+const GMAIL_USER = (process.env.GMAIL_USER || '').trim();
+// Google muestra el app password con espacios ("abcd efgh ..."); los sacamos
+const GMAIL_APP_PASSWORD = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '');
 const EMAIL_DEBUG = process.env.EMAIL_DEBUG === 'true';
 
 const isConfigured = !!(GMAIL_USER && GMAIL_APP_PASSWORD);
@@ -15,7 +16,19 @@ if (isConfigured) {
   transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+    // Que un SMTP caído no deje colgado el registro
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 10000,
   });
+  // Chequeo al boot: deja en los logs si el SMTP está usable y por qué no
+  transporter.verify()
+    .then(() => console.log(`✅ SMTP listo (enviando como ${GMAIL_USER}).`))
+    .catch((e) => console.error(`❌ SMTP configurado pero falló la verificación: ${e.message}`));
+} else if (EMAIL_DEBUG) {
+  console.log('📧 Email en modo debug: los links de verificación se loguean a consola.');
+} else {
+  console.log('📧 Email no configurado: el registro no exige confirmación.');
 }
 
 const TEMPLATES = {
