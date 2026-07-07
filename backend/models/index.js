@@ -43,6 +43,10 @@ Routine.belongsTo(User, { foreignKey: 'user_id' });
 Routine.hasMany(RoutineExercise, { foreignKey: 'routine_id', onDelete: 'CASCADE' });
 RoutineExercise.belongsTo(Routine, { foreignKey: 'routine_id' });
 
+// Copias de rutinas (atribución "Basada en la rutina de @user")
+Routine.belongsTo(Routine, { foreignKey: 'source_routine_id', as: 'SourceRoutine', onDelete: 'SET NULL' });
+Routine.hasMany(Routine, { foreignKey: 'source_routine_id', as: 'Copies' });
+
 Exercise.hasMany(RoutineExercise, { foreignKey: 'exercise_id' });
 RoutineExercise.belongsTo(Exercise, { foreignKey: 'exercise_id' });
 

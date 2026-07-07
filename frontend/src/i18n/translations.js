@@ -25,6 +25,36 @@ const es = {
   'nav.register': 'Crear cuenta',
   'nav.toggleTheme': 'Cambiar tema',
   'nav.toggleLang': 'Switch to English',
+  'nav.routines': 'Rutinas',
+  'nav.saved': 'Guardadas',
+  'nav.likes': 'Me gusta',
+
+  // Sección Rutinas
+  'routines.title': 'Mis rutinas',
+  'routines.subtitle': 'Creá, editá y compartí tus rutinas. Las que guardes de otros aparecen en Guardadas.',
+  'routines.new': '+ Nueva rutina',
+  'routines.emptyTitle': 'Todavía no tenés rutinas',
+  'routines.emptyText': 'Creá tu primera rutina y va a aparecer acá y en tu perfil.',
+  'routines.loginTitle': 'Tus rutinas viven acá',
+  'routines.loginText': 'Iniciá sesión para crear rutinas, guardarlas y copiarte las de otros.',
+  'routines.basedOn': 'Basada en la rutina de',
+  'routines.copies': '{n} copias',
+  'routines.copyOne': '1 copia',
+  'routines.copy': 'Copiar rutina',
+  'routines.copied': 'Rutina copiada a tus rutinas ✓',
+  'routines.copyError': 'No se pudo copiar la rutina.',
+
+  // Guardadas
+  'saved.title': 'Rutinas guardadas',
+  'saved.subtitle': 'Las rutinas de otros que marcaste para tener a mano.',
+  'saved.emptyTitle': 'Nada guardado todavía',
+  'saved.emptyText': 'Tocá el marcador en una rutina para guardarla acá.',
+
+  // Me gusta
+  'likes.title': 'Me gusta',
+  'likes.subtitle': 'Publicaciones que likeaste. Solo vos ves esta lista.',
+  'likes.emptyTitle': 'Todavía no likeaste nada',
+  'likes.emptyText': 'Los posts que likees van a aparecer acá.',
 
   // Auth
   'auth.loginTitle': 'Iniciar sesión',
@@ -221,6 +251,36 @@ const en = {
   'nav.register': 'Sign up',
   'nav.toggleTheme': 'Toggle theme',
   'nav.toggleLang': 'Cambiar a español',
+  'nav.routines': 'Routines',
+  'nav.saved': 'Saved',
+  'nav.likes': 'Likes',
+
+  // Routines section
+  'routines.title': 'My routines',
+  'routines.subtitle': "Create, edit and share your routines. Ones you save from others show up in Saved.",
+  'routines.new': '+ New routine',
+  'routines.emptyTitle': "No routines yet",
+  'routines.emptyText': 'Create your first routine and it will show up here and on your profile.',
+  'routines.loginTitle': 'Your routines live here',
+  'routines.loginText': 'Log in to create routines, save them and copy from others.',
+  'routines.basedOn': 'Based on a routine by',
+  'routines.copies': '{n} copies',
+  'routines.copyOne': '1 copy',
+  'routines.copy': 'Copy routine',
+  'routines.copied': 'Routine copied to your routines ✓',
+  'routines.copyError': 'Could not copy the routine.',
+
+  // Saved
+  'saved.title': 'Saved routines',
+  'saved.subtitle': "Other people's routines you bookmarked to keep handy.",
+  'saved.emptyTitle': 'Nothing saved yet',
+  'saved.emptyText': 'Tap the bookmark on a routine to save it here.',
+
+  // Likes
+  'likes.title': 'Likes',
+  'likes.subtitle': 'Posts you liked. Only you can see this list.',
+  'likes.emptyTitle': "You haven't liked anything yet",
+  'likes.emptyText': 'Posts you like will show up here.',
 
   // Auth
   'auth.loginTitle': 'Log in',

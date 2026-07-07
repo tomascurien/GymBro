@@ -58,6 +58,7 @@ export const postsAPI = {
   deletePost: (postId) => api.delete(`/posts/${postId}`),
   likePost: (postId) => api.post(`/posts/${postId}/like`),
   unlikePost: (postId) => api.delete(`/posts/${postId}/like`),
+  getLikedPosts: () => api.get(`/posts/liked`),
 };
 
 //Ejercicios endpoints
@@ -73,6 +74,7 @@ export const routinesAPI = {
   getFavorites: (username) => api.get(`/routines/user/${username}/favorites`),
   addFavorite: (routineId) => api.post(`/routines/${routineId}/favorite`),
   removeFavorite: (routineId) => api.delete(`/routines/${routineId}/favorite`),
+  copyRoutine: (routineId) => api.post(`/routines/${routineId}/copy`),
 };
 
 // Users endpoints

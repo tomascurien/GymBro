@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import ProfileHeader from '../components/ProfileHeader';
 import ProfilePosts from '../components/ProfilePosts';
 import ProfileRoutines from '../components/ProfileRoutines';
 import { usersAPI, postsAPI, routinesAPI } from '../services/api';
 import EditProfileModal from '../components/EditProfileModal';
-import CreateRoutineModal from '../components/CreateRoutineModal';
 import { useI18n } from '../i18n/I18nContext';
 
 const Profile = () => {
   const { username } = useParams();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useI18n();
   const [profile, setProfile] = useState(null);
@@ -22,7 +22,6 @@ const Profile = () => {
   const [error, setError] = useState('');
 
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showRoutineModal, setShowRoutineModal] = useState(false);
   const [isWelcome, setIsWelcome] = useState(false);
 
   const userStr = localStorage.getItem('user');
@@ -174,16 +173,6 @@ const Profile = () => {
     setIsWelcome(false);
   };
 
-  const handleRoutineCreated = async () => {
-    try {
-      const routinesRes = await routinesAPI.getUserRoutines(username);
-      setRoutines(routinesRes.data || []);
-    } catch (error) {
-      console.error('Error actualizando rutinas:', error);
-    }
-    setShowRoutineModal(false);
-  };
-
   const tabClass = (tab) =>
     `whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
       activeTab === tab
@@ -245,9 +234,12 @@ const Profile = () => {
             <button onClick={() => setActiveTab('rutinas')} className={tabClass('rutinas')}>
               {t('profile.routines')} ({routines.length})
             </button>
-            <button onClick={() => setActiveTab('favorites')} className={tabClass('favorites')}>
-              {t('profile.favorites')} ({favoriteRoutines.length})
-            </button>
+            {/* Guardadas es privado: solo en el perfil propio */}
+            {isOwnProfile && (
+              <button onClick={() => setActiveTab('favorites')} className={tabClass('favorites')}>
+                {t('profile.favorites')} ({favoriteRoutines.length})
+              </button>
+            )}
           </nav>
         </div>
 
@@ -272,7 +264,7 @@ const Profile = () => {
               <h2 className="text-2xl font-display font-bold text-ink">{t('profile.routines')}</h2>
               {isOwnProfile && (
                 <button
-                  onClick={() => setShowRoutineModal(true)}
+                  onClick={() => navigate('/routines')}
                   className="px-4 py-2 bg-accent text-on-accent rounded-full hover:bg-accent-hi transition-colors text-sm font-semibold"
                 >
                   {t('profile.addRoutine')}
@@ -281,7 +273,7 @@ const Profile = () => {
             </div>
             <ProfileRoutines
               routines={routines}
-              onAddRoutine={() => setShowRoutineModal(true)}
+              onAddRoutine={() => navigate('/routines')}
               onRoutineDelete={handleRoutineDelete}
               isOwnProfile={isOwnProfile}
               myFavoriteIds={myFavoriteIds}
@@ -291,7 +283,7 @@ const Profile = () => {
           </div>
         )}
 
-        {activeTab === 'favorites' && (
+        {activeTab === 'favorites' && isOwnProfile && (
           <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-display font-bold text-ink">{t('profile.favoriteRoutines')}</h2>
@@ -318,12 +310,6 @@ const Profile = () => {
         />
       )}
 
-      {showRoutineModal && (
-        <CreateRoutineModal
-          onClose={() => setShowRoutineModal(false)}
-          onRoutineCreated={handleRoutineCreated}
-        />
-      )}
     </div>
   );
 };

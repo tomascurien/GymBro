@@ -20,6 +20,12 @@ const Routine = sequelize.define('Routine', {
     allowNull: false,
     defaultValue: 'Mi Rutina',
   },
+  // Atribución: si la rutina se creó copiando otra ("Basada en la rutina de @user").
+  // SET NULL al borrar la original para no romper las copias.
+  source_routine_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
 
 }, {
   tableName: 'routines',

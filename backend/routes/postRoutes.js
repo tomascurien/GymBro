@@ -248,6 +248,33 @@ router.get("/following", authMiddleware, async (req, res) => {
   }
 });
 
+// Posts que likeó el usuario autenticado (privado, para su pestaña "Me gusta")
+router.get("/liked", authMiddleware, async (req, res) => {
+  try {
+    const { limit, offset } = parsePagination(req);
+    const myLikes = await Like.findAll({
+      where: { user_id: req.user.id },
+      order: [["id", "DESC"]],
+      limit,
+      offset,
+      attributes: ['post_id'],
+    });
+    const ids = myLikes.map(l => l.post_id);
+    const posts = await Post.findAll({
+      where: { id: { [Op.in]: ids } },
+      include: [{ model: User, attributes: USER_ATTRS }],
+    });
+    // Mantener el orden de los likes (más reciente primero)
+    const byId = new Map(posts.map(p => [p.id, p.get({ plain: true })]));
+    const ordered = ids.map(id => byId.get(id)).filter(Boolean)
+      .map(p => ({ ...p, isLiked: true }));
+    res.json(ordered);
+  } catch (error) {
+    console.error("Error al obtener posts likeados:", error);
+    res.status(500).json({ message: "Error al obtener tus me gusta." });
+  }
+});
+
 // Hashtags en tendencia: frecuencia + likes sobre los últimos 200 posts
 router.get("/trending", async (req, res) => {
   try {

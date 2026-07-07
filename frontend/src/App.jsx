@@ -1,11 +1,15 @@
 // frontend/src/App.jsx
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Feed from './pages/Feed';
 import Profile from './pages/Profile';
+import Routines from './pages/Routines';
+import SavedRoutines from './pages/SavedRoutines';
+import LikedPosts from './pages/LikedPosts';
 import VerifyEmail from './pages/VerifyEmail';
 import { useI18n } from './i18n/I18nContext';
 
@@ -17,6 +21,21 @@ import { useI18n } from './i18n/I18nContext';
 const PublicRoute = ({ children }) => {
   const [hadToken] = useState(() => !!localStorage.getItem('token'));
   return !hadToken ? children : <Navigate to="/feed" />;
+};
+
+// Shell con sidebar: rail izquierdo (desktop) / barra inferior (mobile).
+// Las pantallas de auth y verificación van a pantalla completa, sin sidebar.
+const BARE_ROUTES = ['/login', '/register', '/verify'];
+const LayoutShell = ({ children }) => {
+  const { pathname } = useLocation();
+  const bare = BARE_ROUTES.some((p) => pathname.startsWith(p));
+  if (bare) return children;
+  return (
+    <div className="max-w-7xl mx-auto px-0 md:px-4 flex">
+      <Sidebar />
+      <main className="flex-1 min-w-0 pb-20 md:pb-0">{children}</main>
+    </div>
+  );
 };
 
 function App() {
@@ -71,6 +90,7 @@ function App() {
       {/* Navbar siempre visible */}
       <Navbar key={authKey} />
 
+      <LayoutShell>
       <Routes>
         {/* Rutas públicas */}
         <Route
@@ -96,6 +116,11 @@ function App() {
         {/* Ruta Feed - PÚBLICA (accesible sin login) */}
         <Route path="/feed" element={<Feed />} />
 
+        {/* Secciones del sidebar */}
+        <Route path="/routines" element={<Routines />} />
+        <Route path="/saved" element={<SavedRoutines />} />
+        <Route path="/likes" element={<LikedPosts />} />
+
         {/* Perfil - público/privado según sesión */}
         <Route path="/profile/:username" element={<Profile />} />
 
@@ -120,6 +145,7 @@ function App() {
           }
         />
       </Routes>
+      </LayoutShell>
     </Router>
   );
 }
