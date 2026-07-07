@@ -115,7 +115,7 @@ const Feed = () => {
 
   const tabs = [
     { key: 'forYou', label: t('feed.forYou') },
-    { key: 'recent', label: t('feed.recent') },
+    //{ key: 'recent', label: t('feed.recent') },
     ...(isLoggedIn ? [{ key: 'following', label: t('feed.following') }] : []),
   ];
 
