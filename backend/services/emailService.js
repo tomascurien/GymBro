@@ -1,18 +1,36 @@
 const nodemailer = require('nodemailer');
 
-// Envío de correos vía Gmail SMTP (app password). La verificación de email
-// solo se activa si hay credenciales configuradas; con EMAIL_DEBUG=true se
-// "envía" logueando el link a consola (para desarrollo sin SMTP).
+// Envío de correos de verificación. Transportes, en orden de prioridad:
+//   1. Brevo HTTP API (BREVO_API_KEY + EMAIL_FROM) — va por HTTPS/443, funciona
+//      en hosts que bloquean SMTP saliente (Railway en planes free/trial).
+//   2. Gmail SMTP (GMAIL_USER + GMAIL_APP_PASSWORD) — para local u hosts sin bloqueo.
+//   3. EMAIL_DEBUG=true — no envía: loguea el link a consola (desarrollo).
 const GMAIL_USER = (process.env.GMAIL_USER || '').trim();
 // Google muestra el app password con espacios ("abcd efgh ..."); los sacamos
 const GMAIL_APP_PASSWORD = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '');
+const BREVO_API_KEY = (process.env.BREVO_API_KEY || '').trim();
+// Remitente para Brevo: debe estar verificado en la cuenta de Brevo
+const EMAIL_FROM = (process.env.EMAIL_FROM || GMAIL_USER || '').trim();
 const EMAIL_DEBUG = process.env.EMAIL_DEBUG === 'true';
 
-const isConfigured = !!(GMAIL_USER && GMAIL_APP_PASSWORD);
+const brevoConfigured = !!(BREVO_API_KEY && EMAIL_FROM);
+const gmailConfigured = !!(GMAIL_USER && GMAIL_APP_PASSWORD);
+const isConfigured = brevoConfigured || gmailConfigured;
 const isEmailEnabled = () => isConfigured || EMAIL_DEBUG;
 
 let transporter = null;
-if (isConfigured) {
+if (brevoConfigured) {
+  // Chequeo al boot: deja en los logs si la API key de Brevo es válida
+  fetch('https://api.brevo.com/v3/account', { headers: { 'api-key': BREVO_API_KEY } })
+    .then(async (r) => {
+      if (r.ok) {
+        console.log(`✅ Brevo listo (enviando como ${EMAIL_FROM}).`);
+      } else {
+        console.error(`❌ Brevo configurado pero la API key no valida: HTTP ${r.status} ${await r.text()}`);
+      }
+    })
+    .catch((e) => console.error(`❌ Brevo configurado pero falló la verificación: ${e.message}`));
+} else if (gmailConfigured) {
   transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
@@ -21,10 +39,9 @@ if (isConfigured) {
     greetingTimeout: 8000,
     socketTimeout: 10000,
   });
-  // Chequeo al boot: deja en los logs si el SMTP está usable y por qué no
   transporter.verify()
     .then(() => console.log(`✅ SMTP listo (enviando como ${GMAIL_USER}).`))
-    .catch((e) => console.error(`❌ SMTP configurado pero falló la verificación: ${e.message}`));
+    .catch((e) => console.error(`❌ SMTP configurado pero falló la verificación: ${e.message} (si es "Connection timeout", el host bloquea SMTP saliente: usá Brevo con BREVO_API_KEY)`));
 } else if (EMAIL_DEBUG) {
   console.log('📧 Email en modo debug: los links de verificación se loguean a consola.');
 } else {
@@ -59,6 +76,22 @@ const buildHtml = (t, name, link) => `
     </div>
   </div>`;
 
+const sendViaBrevo = async (to, subject, html) => {
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sender: { name: 'Forma', email: EMAIL_FROM },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Brevo HTTP ${res.status}: ${await res.text()}`);
+  }
+};
+
 const sendVerificationEmail = async (email, name, link, lang) => {
   const t = TEMPLATES[lang === 'en' ? 'en' : 'es'];
 
@@ -67,12 +100,17 @@ const sendVerificationEmail = async (email, name, link, lang) => {
     return;
   }
 
-  await transporter.sendMail({
-    from: `"Forma" <${GMAIL_USER}>`,
-    to: email,
-    subject: t.subject,
-    html: buildHtml(t, name, link),
-  });
+  const html = buildHtml(t, name, link);
+  if (brevoConfigured) {
+    await sendViaBrevo(email, t.subject, html);
+  } else {
+    await transporter.sendMail({
+      from: `"Forma" <${GMAIL_USER}>`,
+      to: email,
+      subject: t.subject,
+      html,
+    });
+  }
 };
 
 module.exports = { isEmailEnabled, sendVerificationEmail };
