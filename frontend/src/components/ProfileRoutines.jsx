@@ -112,11 +112,35 @@ const RoutineCard = ({ routine, onRoutineDelete, onFavoriteToggle, myFavoriteIds
   const copies = routine.copies_count || 0;
   const sourceUser = routine.SourceRoutine?.User;
 
+  // Agrupar ejercicios por día (rutinas viejas: todo en día 1 → lista plana)
+  const byDay = {};
+  (routine.RoutineExercises || []).forEach((ex) => {
+    const d = ex.day || 1;
+    (byDay[d] = byDay[d] || []).push(ex);
+  });
+  const dayNumbers = Object.keys(byDay).map(Number).sort((a, b) => a - b);
+  const multiDay = dayNumbers.length > 1;
+
   return (
     <div className="bg-surface border border-edge rounded-2xl p-6 mb-6">
       <div className="flex justify-between items-start mb-4 gap-3">
         <div className="min-w-0">
           <h3 className="text-xl font-display font-bold text-ink truncate">{routine.title}</h3>
+          {/* Objetivo y frecuencia (rutinas creadas con el wizard) */}
+          {(routine.objective || routine.days_per_week) && (
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {routine.objective && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent">
+                  {t(`objective.${routine.objective}`)}
+                </span>
+              )}
+              {routine.days_per_week && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-raised text-muted border border-edge">
+                  {t('wizard.daysChip', { n: routine.days_per_week })}
+                </span>
+              )}
+            </div>
+          )}
           {/* Atribución: esta rutina nació como copia de otra */}
           {sourceUser && (
             <p className="text-sm text-muted mt-0.5">
@@ -155,11 +179,26 @@ const RoutineCard = ({ routine, onRoutineDelete, onFavoriteToggle, myFavoriteIds
         </div>
       </div>
 
-      <ul className="divide-y divide-edge">
-        {routine.RoutineExercises.sort((a, b) => a.index - b.index).map((exercise) => (
-          <RoutineExerciseItem key={exercise.id} exercise={exercise} />
-        ))}
-      </ul>
+      {multiDay ? (
+        dayNumbers.map((d) => (
+          <div key={d} className="mt-3 first:mt-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-accent mb-1">
+              {t('wizard.day', { n: d })}
+            </p>
+            <ul className="divide-y divide-edge">
+              {byDay[d].sort((a, b) => a.index - b.index).map((exercise) => (
+                <RoutineExerciseItem key={exercise.id} exercise={exercise} />
+              ))}
+            </ul>
+          </div>
+        ))
+      ) : (
+        <ul className="divide-y divide-edge">
+          {(routine.RoutineExercises || []).sort((a, b) => a.index - b.index).map((exercise) => (
+            <RoutineExerciseItem key={exercise.id} exercise={exercise} />
+          ))}
+        </ul>
+      )}
     </div>
   );
 };

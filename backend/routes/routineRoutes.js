@@ -40,7 +40,7 @@ const annotateCopies = async (routines) => {
 router.post("/", authMiddleware, async (req, res) => {
 
   
-  const { title, exercises } = req.body;
+  const { title, exercises, objective, days_per_week } = req.body;
   const userId = req.user.id;
 
   if (!title || !exercises || exercises.length === 0) {
@@ -55,7 +55,9 @@ router.post("/", authMiddleware, async (req, res) => {
     // 1. Crear la Rutina principal
     const newRoutine = await Routine.create({
       user_id: userId,
-      title: title
+      title: title,
+      objective: objective || null,
+      days_per_week: days_per_week || null
     }, { transaction: t });
 
     // 2. Recorrer cada ejercicio enviado
@@ -65,6 +67,7 @@ router.post("/", authMiddleware, async (req, res) => {
         routine_id: newRoutine.id,
         exercise_id: ex.exercise_id,
         index: ex.index,
+        day: ex.day || 1,
         weight_kg: ex.weight_kg,
         reps: ex.reps
       }, { transaction: t });
@@ -121,6 +124,8 @@ router.post("/:id/copy", authMiddleware, async (req, res) => {
     const copy = await Routine.create({
       user_id: req.user.id,
       title: original.title,
+      objective: original.objective,
+      days_per_week: original.days_per_week,
       // Atribuir a la rutina raíz: copiar una copia sigue apuntando al original
       source_routine_id: original.source_routine_id || original.id,
     }, { transaction: t });
@@ -130,6 +135,7 @@ router.post("/:id/copy", authMiddleware, async (req, res) => {
         routine_id: copy.id,
         exercise_id: ex.exercise_id,
         index: ex.index,
+        day: ex.day || 1,
         weight_kg: ex.weight_kg,
         reps: ex.reps,
       }, { transaction: t });

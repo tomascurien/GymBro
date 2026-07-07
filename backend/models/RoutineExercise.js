@@ -29,6 +29,11 @@ const RoutineExercise = sequelize.define('RoutineExercise', {
     allowNull: false,
     defaultValue: 0,
   },
+  day: { // Día de la rutina al que pertenece (1..days_per_week)
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
+  },
   weight_kg: {
     type: DataTypes.DECIMAL(5, 2), // 5 dígitos, 2 decimales (ej. 100.25)
     allowNull: true,
