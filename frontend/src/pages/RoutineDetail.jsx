@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { routinesAPI } from '../services/api';
 import { useI18n } from '../i18n/I18nContext';
-import { MUSCLE_EMOJI } from '../constants/muscles';
+import { AlertCircleIcon } from '../components/Icons';
 
 // Las descripciones de Wger vienen con HTML: las pasamos a texto plano
 const stripHtml = (html) =>
@@ -29,20 +29,20 @@ const ExerciseRow = ({ item, t }) => {
   const description = stripHtml(ex.description);
 
   return (
-    <div className="bg-raised border border-edge rounded-xl overflow-hidden">
+    <div className="bg-surface border border-edge rounded-2xl overflow-hidden hover:border-muted/50 transition-colors">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 p-3 text-left hover:bg-edge/40 transition-colors"
+        className="w-full flex items-center gap-4 p-4 text-left"
       >
         <img
-          src={image || 'https://placehold.co/48x48/e2e8f0/64748b?text=?'}
+          src={image || 'https://placehold.co/96x96/e2e8f0/64748b?text=%20'}
           alt=""
-          className="w-12 h-12 object-cover rounded-lg bg-surface shrink-0"
+          className="w-24 h-24 object-cover rounded-xl bg-raised shrink-0"
         />
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-ink truncate">{ex.name}</p>
-          <p className="text-sm text-muted">
+          <p className="font-display font-semibold text-lg text-ink">{ex.name}</p>
+          <p className="text-muted mt-1">
             {sets}×{item.reps} · {item.weight_kg} kg
           </p>
         </div>
@@ -50,8 +50,18 @@ const ExerciseRow = ({ item, t }) => {
       </button>
 
       {open && (
-        <div className="px-4 pb-4 pt-1 border-t border-edge/60">
-          <div className="flex gap-2 my-3">
+        <div className="px-4 pb-5 border-t border-edge/60">
+          {/* Imagen grande: el punto de entrar al ejercicio es VER cómo se hace */}
+          {image && (
+            <div className="mt-4 rounded-xl overflow-hidden bg-raised">
+              <img
+                src={image}
+                alt={ex.name}
+                className="w-full max-h-[420px] object-contain"
+              />
+            </div>
+          )}
+          <div className="flex gap-2 my-4">
             <span className="px-3 py-1.5 rounded-full text-sm font-semibold bg-accent/10 text-accent">
               {t('routine.setsCount', { n: sets })}
             </span>
@@ -152,7 +162,7 @@ const RoutineDetail = () => {
     return (
       <div className="min-h-screen bg-canvas flex items-center justify-center px-4">
         <div className="text-center">
-          <div className="text-6xl mb-4">😕</div>
+          <AlertCircleIcon size={48} className="mx-auto mb-4 text-muted" />
           <h2 className="text-2xl font-display font-bold text-ink mb-2">{t('routineDetail.notFoundTitle')}</h2>
           <p className="text-muted">{t('routineDetail.notFoundText')}</p>
         </div>
@@ -312,11 +322,18 @@ const RoutineDetail = () => {
         <div className="space-y-6">
           {groups.map((g) => (
             <div key={g.cat}>
-              <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted mb-2">
-                <span className="text-lg">{MUSCLE_EMOJI[g.cat] || '🏋️'}</span>
-                {t(`muscle.${g.cat}`)}
+              <h2 className="flex items-center gap-2.5 mb-3">
+                <span className="w-1 h-5 rounded-full bg-accent"></span>
+                <span className="font-display font-bold text-ink uppercase tracking-wide text-sm">
+                  {t(`muscle.${g.cat}`)}
+                </span>
+                <span className="text-xs text-muted">
+                  {g.items.length === 1
+                    ? t('routineDetail.exerciseOne')
+                    : t('routineDetail.exerciseCount', { n: g.items.length })}
+                </span>
               </h2>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {g.items.map((item) => (
                   <ExerciseRow key={item.id} item={item} t={t} />
                 ))}

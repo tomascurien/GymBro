@@ -6,6 +6,7 @@ import ProfileRoutines from '../components/ProfileRoutines';
 import { usersAPI, postsAPI, routinesAPI } from '../services/api';
 import EditProfileModal from '../components/EditProfileModal';
 import { useI18n } from '../i18n/I18nContext';
+import { AlertCircleIcon } from '../components/Icons';
 
 const Profile = () => {
   const { username } = useParams();
@@ -195,7 +196,7 @@ const Profile = () => {
     return (
       <div className="min-h-screen bg-canvas flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">😕</div>
+          <AlertCircleIcon size={48} className="mx-auto mb-4 text-muted" />
           <h2 className="text-2xl font-display font-bold text-ink mb-2">
             {t('profile.loadErrorTitle')}
           </h2>

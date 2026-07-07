@@ -6,6 +6,7 @@ import * as Yup from 'yup';
 import { authAPI } from '../services/api';
 import { LogoMark } from '../components/Logo';
 import { useI18n } from '../i18n/I18nContext';
+import { MailIcon } from '../components/Icons';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -107,7 +108,7 @@ const Register = () => {
         <div className="max-w-md w-full text-center animate-fade-up">
           <LogoMark size={64} className="mx-auto mb-6" />
           <div className="bg-surface border border-edge rounded-2xl p-8">
-            <div className="text-5xl mb-4">📬</div>
+            <MailIcon size={48} className="mx-auto mb-4 text-accent" />
             <h1 className="text-2xl font-display font-bold text-ink mb-2">{t('verify.checkTitle')}</h1>
             <p className="text-muted mb-2">{t('verify.checkText', { email: pendingEmail })}</p>
             <p className="text-muted text-sm mb-6">{t('verify.spamHint')}</p>

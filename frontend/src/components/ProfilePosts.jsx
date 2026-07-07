@@ -1,6 +1,7 @@
 import React from 'react';
 import PostCard from './PostCard';
 import { useI18n } from '../i18n/I18nContext';
+import { NoteIcon } from './Icons';
 
 const ProfilePosts = ({ posts, loading, onPostDeleted, onLikeUpdate }) => {
   const { t } = useI18n();
@@ -16,7 +17,7 @@ const ProfilePosts = ({ posts, loading, onPostDeleted, onLikeUpdate }) => {
   if (!posts || posts.length === 0) {
     return (
       <div className="bg-surface border border-edge rounded-2xl p-12 text-center">
-        <div className="text-6xl mb-4">📝</div>
+        <NoteIcon size={48} className="mx-auto mb-4 text-muted" />
         <h3 className="text-xl font-display font-semibold text-ink mb-2">
           {t('profile.noPostsTitle')}
         </h3>

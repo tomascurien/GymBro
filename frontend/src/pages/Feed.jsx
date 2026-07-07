@@ -5,6 +5,7 @@ import PostCard from '../components/PostCard';
 import CreatePostModal from '../components/CreatePostModal';
 import { postsAPI } from '../services/api';
 import { useI18n } from '../i18n/I18nContext';
+import { DumbbellIcon } from '../components/Icons';
 
 const Feed = () => {
   const { t } = useI18n();
@@ -224,7 +225,7 @@ const Feed = () => {
           </div>
         ) : posts.length === 0 ? (
           <div className="bg-surface border border-edge rounded-2xl p-8 text-center">
-            <div className="text-6xl mb-4">💪</div>
+            <DumbbellIcon size={48} className="mx-auto mb-4 text-muted" />
             <h3 className="text-xl font-display font-semibold text-ink mb-2">
               {t('feed.emptyTitle')}
             </h3>

@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import PostCard from '../components/PostCard';
 import { postsAPI } from '../services/api';
 import { useI18n } from '../i18n/I18nContext';
+import { HeartIcon } from '../components/Icons';
 
 const LikedPosts = () => {
   const { t } = useI18n();
@@ -45,7 +46,7 @@ const LikedPosts = () => {
       <div className="min-h-screen bg-canvas">
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
           <div className="bg-surface border border-edge rounded-2xl p-10 animate-fade-up">
-            <div className="text-6xl mb-4">🤍</div>
+            <HeartIcon size={48} className="mx-auto mb-4 text-muted" />
             <h1 className="text-2xl font-display font-bold text-ink mb-2">{t('likes.title')}</h1>
             <p className="text-muted mb-6">{t('routines.loginText')}</p>
             <Link
@@ -74,7 +75,7 @@ const LikedPosts = () => {
           </div>
         ) : posts.length === 0 ? (
           <div className="bg-surface border border-edge rounded-2xl p-10 text-center">
-            <div className="text-6xl mb-4">🤍</div>
+            <HeartIcon size={48} className="mx-auto mb-4 text-muted" />
             <h3 className="text-xl font-display font-semibold text-ink mb-2">{t('likes.emptyTitle')}</h3>
             <p className="text-muted">{t('likes.emptyText')}</p>
           </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { routinesAPI } from '../services/api';
 import { useI18n } from '../i18n/I18nContext';
-import { MUSCLE_EMOJI } from '../constants/muscles';
+import { DumbbellIcon } from './Icons';
 
 const BookmarkIcon = ({ isFavorited, isLoggedIn, ...props }) => (
   <button
@@ -86,13 +86,38 @@ const RoutineCard = ({ routine, onRoutineDelete, onFavoriteToggle, myFavoriteIds
   const exercises = routine.RoutineExercises || [];
   // Grupos musculares presentes, en orden de aparición
   const groupIds = [...new Set(exercises.map((ex) => ex.Exercise?.category).filter(Boolean))];
+  // Fotos de ejercicios para el hero de la card (hasta 4 distintas)
+  const photos = [...new Set(
+    exercises
+      .map((ex) => ex.Exercise?.ExerciseImages?.[0]?.image_url)
+      .filter(Boolean)
+  )].slice(0, 4);
 
   return (
     <div
       onClick={() => navigate(`/routines/${routine.id}`)}
-      className="bg-surface border border-edge rounded-2xl p-5 mb-4 cursor-pointer hover:border-accent/50 transition-colors group"
+      className="bg-surface border border-edge rounded-2xl overflow-hidden mb-4 cursor-pointer hover:border-accent/50 transition-colors group"
     >
-      <div className="flex justify-between items-start gap-3">
+      {/* Hero: fotos reales de los ejercicios de la rutina */}
+      {photos.length > 0 ? (
+        <div className="flex h-28 gap-px bg-edge">
+          {photos.map((src, i) => (
+            <div key={i} className="flex-1 overflow-hidden bg-surface">
+              <img
+                src={src}
+                alt=""
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="h-20 flex items-center justify-center bg-raised text-muted">
+          <DumbbellIcon size={32} />
+        </div>
+      )}
+
+      <div className="p-5 flex justify-between items-start gap-3">
         <div className="min-w-0">
           <h3 className="text-lg font-display font-bold text-ink truncate group-hover:text-accent transition-colors">
             {routine.title}
@@ -150,9 +175,14 @@ const RoutineCard = ({ routine, onRoutineDelete, onFavoriteToggle, myFavoriteIds
 
           {/* Grupos musculares que toca */}
           {groupIds.length > 0 && (
-            <div className="flex items-center gap-1 mt-2.5 text-lg">
+            <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
               {groupIds.map((gid) => (
-                <span key={gid} title={t(`muscle.${gid}`)}>{MUSCLE_EMOJI[gid] || '🏋️'}</span>
+                <span
+                  key={gid}
+                  className="px-2 py-0.5 rounded-md text-[11px] font-semibold uppercase tracking-wide bg-raised text-muted border border-edge"
+                >
+                  {t(`muscle.${gid}`)}
+                </span>
               ))}
             </div>
           )}
@@ -199,7 +229,7 @@ const ProfileRoutines = ({
       {/* Si no hay rutinas, muestra el mensaje */}
       {routines.length === 0 && (
         <div className="bg-surface border border-edge rounded-2xl p-8 text-center">
-          <div className="text-5xl mb-4">🏋️</div>
+          <DumbbellIcon size={44} className="mx-auto mb-4 text-muted" />
           <h3 className="text-lg font-display font-semibold text-ink">
             {t('profile.noRoutinesTitle')}
           </h3>

@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import ProfileRoutines from '../components/ProfileRoutines';
 import { routinesAPI } from '../services/api';
 import { useI18n } from '../i18n/I18nContext';
+import { BookmarkIcon } from '../components/Icons';
 
 const SavedRoutines = () => {
   const { t } = useI18n();
@@ -42,7 +43,7 @@ const SavedRoutines = () => {
       <div className="min-h-screen bg-canvas">
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
           <div className="bg-surface border border-edge rounded-2xl p-10 animate-fade-up">
-            <div className="text-6xl mb-4">🔖</div>
+            <BookmarkIcon size={48} className="mx-auto mb-4 text-muted" />
             <h1 className="text-2xl font-display font-bold text-ink mb-2">{t('saved.title')}</h1>
             <p className="text-muted mb-6">{t('routines.loginText')}</p>
             <Link
@@ -71,7 +72,7 @@ const SavedRoutines = () => {
           </div>
         ) : routines.length === 0 ? (
           <div className="bg-surface border border-edge rounded-2xl p-10 text-center">
-            <div className="text-6xl mb-4">🔖</div>
+            <BookmarkIcon size={48} className="mx-auto mb-4 text-muted" />
             <h3 className="text-xl font-display font-semibold text-ink mb-2">{t('saved.emptyTitle')}</h3>
             <p className="text-muted">{t('saved.emptyText')}</p>
           </div>

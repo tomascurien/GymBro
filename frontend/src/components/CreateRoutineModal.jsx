@@ -5,23 +5,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { exercisesAPI, routinesAPI } from '../services/api';
 import { useI18n } from '../i18n/I18nContext';
-import { MUSCLE_GROUPS } from '../constants/muscles';
+import { MUSCLE_GROUP_IDS } from '../constants/muscles';
 
-const OBJECTIVES = [
-  { slug: 'hypertrophy', emoji: '💪' },
-  { slug: 'strength', emoji: '🏋️' },
-  { slug: 'fatloss', emoji: '🔥' },
-  { slug: 'endurance', emoji: '🏃' },
-  { slug: 'active', emoji: '🌱' },
-];
+const OBJECTIVES = ['hypertrophy', 'strength', 'fatloss', 'endurance', 'active'];
 
 const SPLITS = [
-  { slug: 'fullbody', emoji: '🧍', days: [2, 3], defaultDays: 3 },
-  { slug: 'upperlower', emoji: '⚖️', days: [4], defaultDays: 4 },
-  { slug: 'ppl', emoji: '🗓️', days: [5, 6], defaultDays: 5 },
+  { slug: 'fullbody', days: [2, 3], defaultDays: 3 },
+  { slug: 'upperlower', days: [4], defaultDays: 4 },
+  { slug: 'ppl', days: [5, 6], defaultDays: 5 },
 ];
 
-const OptionCard = ({ selected, onClick, emoji, title, desc, children }) => (
+const OptionCard = ({ selected, onClick, title, desc, children }) => (
   <button
     type="button"
     onClick={onClick}
@@ -32,9 +26,16 @@ const OptionCard = ({ selected, onClick, emoji, title, desc, children }) => (
     }`}
   >
     <div className="flex items-start gap-3">
-      <span className="text-2xl leading-none mt-0.5">{emoji}</span>
+      {/* Indicador tipo radio */}
+      <span
+        className={`mt-1 w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors ${
+          selected ? 'border-accent' : 'border-muted/50'
+        }`}
+      >
+        {selected && <span className="w-2.5 h-2.5 rounded-full bg-accent"></span>}
+      </span>
       <div className="min-w-0">
-        <p className={`font-display font-semibold ${selected ? 'text-ink' : 'text-ink'}`}>{title}</p>
+        <p className="font-display font-semibold text-ink">{title}</p>
         <p className="text-sm text-muted mt-0.5">{desc}</p>
         {children}
       </div>
@@ -188,14 +189,13 @@ const CreateRoutineModal = ({ onClose, onRoutineCreated }) => {
       <h3 className="text-xl font-display font-bold text-ink">{t('wizard.objectiveTitle')}</h3>
       <p className="text-sm text-muted mb-4">{t('wizard.objectiveSub')}</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {OBJECTIVES.map((o) => (
+        {OBJECTIVES.map((slug) => (
           <OptionCard
-            key={o.slug}
-            selected={objective === o.slug}
-            onClick={() => setObjective(o.slug)}
-            emoji={o.emoji}
-            title={t(`objective.${o.slug}`)}
-            desc={t(`objective.${o.slug}.desc`)}
+            key={slug}
+            selected={objective === slug}
+            onClick={() => setObjective(slug)}
+            title={t(`objective.${slug}`)}
+            desc={t(`objective.${slug}.desc`)}
           />
         ))}
       </div>
@@ -213,7 +213,6 @@ const CreateRoutineModal = ({ onClose, onRoutineCreated }) => {
             key={s.slug}
             selected={split === s.slug}
             onClick={() => pickSplit(s)}
-            emoji={s.emoji}
             title={t(`split.${s.slug}`)}
             desc={t(`split.${s.slug}.desc`)}
           >
@@ -321,26 +320,49 @@ const CreateRoutineModal = ({ onClose, onRoutineCreated }) => {
     </div>
   );
 
+  // Imagen representativa por grupo muscular (primer ejercicio con foto)
+  const groupImage = (groupId) => {
+    const ex = allExercises.find((e) => e.category === groupId && e.ExerciseImages?.[0]?.image_url);
+    return ex?.ExerciseImages[0].image_url || null;
+  };
+
   const renderGroups = () => (
     <div>
       <h3 className="text-xl font-display font-bold text-ink mb-4">
         {t('wizard.day', { n: activeDay })} · {t('wizard.pickGroup')}
       </h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {MUSCLE_GROUPS.map((g) => (
-          <button
-            key={g.id}
-            type="button"
-            onClick={() => { setGroupFilter(g.id); setView('LIST'); }}
-            className="p-4 rounded-2xl border-2 border-edge bg-raised hover:border-accent/60 transition-colors text-center"
-          >
-            <div className="text-3xl mb-1.5">{g.emoji}</div>
-            <p className="font-display font-semibold text-ink text-sm">{t(`muscle.${g.id}`)}</p>
-            <p className="text-xs text-muted mt-0.5">
-              {t('wizard.exerciseCount', { n: allExercises.filter((ex) => ex.category === g.id).length })}
-            </p>
-          </button>
-        ))}
+        {MUSCLE_GROUP_IDS.map((gid) => {
+          const img = groupImage(gid);
+          return (
+            <button
+              key={gid}
+              type="button"
+              onClick={() => { setGroupFilter(gid); setView('LIST'); }}
+              className="rounded-2xl border-2 border-edge bg-raised hover:border-accent/60 transition-colors overflow-hidden text-left group"
+            >
+              <div className="h-24 bg-surface overflow-hidden">
+                {img ? (
+                  <img
+                    src={img}
+                    alt=""
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted font-display text-2xl font-bold">
+                    {t(`muscle.${gid}`).charAt(0)}
+                  </div>
+                )}
+              </div>
+              <div className="p-3">
+                <p className="font-display font-semibold text-ink text-sm">{t(`muscle.${gid}`)}</p>
+                <p className="text-xs text-muted mt-0.5">
+                  {t('wizard.exerciseCount', { n: allExercises.filter((ex) => ex.category === gid).length })}
+                </p>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

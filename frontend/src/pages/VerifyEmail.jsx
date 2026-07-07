@@ -7,6 +7,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import { LogoMark } from '../components/Logo';
 import { useI18n } from '../i18n/I18nContext';
+import { CheckCircleIcon, AlertCircleIcon } from '../components/Icons';
 
 const VerifyEmail = () => {
   const { t } = useI18n();
@@ -48,7 +49,7 @@ const VerifyEmail = () => {
 
         {status === 'success' && (
           <div className="bg-surface border border-edge rounded-2xl p-8">
-            <div className="text-5xl mb-4">✅</div>
+            <CheckCircleIcon size={48} className="mx-auto mb-4 text-accent" />
             <h1 className="text-2xl font-display font-bold text-ink mb-2">{t('verify.successTitle')}</h1>
             <p className="text-muted">{t('verify.successText')}</p>
           </div>
@@ -56,7 +57,7 @@ const VerifyEmail = () => {
 
         {status === 'error' && (
           <div className="bg-surface border border-edge rounded-2xl p-8">
-            <div className="text-5xl mb-4">😕</div>
+            <AlertCircleIcon size={48} className="mx-auto mb-4 text-muted" />
             <h1 className="text-2xl font-display font-bold text-ink mb-2">{t('verify.errorTitle')}</h1>
             <p className="text-muted mb-6">{t('verify.errorText')}</p>
             <Link
