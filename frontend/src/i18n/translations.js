@@ -4,7 +4,7 @@
 const es = {
   // Marca
   'brand.name': 'Forma',
-  'brand.tagline': 'Aprende. Comparte. Crece.',
+  'brand.tagline': 'Aprendé. Compartí. Crecé.',
   'brand.pitch': '¿Cuántas veces desinstalaste X, TikTok o Instagram? Probá algo distinto.',
 
   // Genéricos
