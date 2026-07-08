@@ -130,7 +130,7 @@ function App() {
         <Route
           path="/"
           element={
-            isAuthenticated ? <Navigate to="/feed" /> : <Navigate to="/login" />
+            isAuthenticated ? <Navigate to="/feed" /> : <Navigate to="/feed" />
           }
         />
 
