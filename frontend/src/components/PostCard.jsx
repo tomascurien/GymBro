@@ -150,13 +150,18 @@ const PostCard = ({ post, onDelete, onLikeUpdate }) => {
   const patchComment = (commentId, patch) => {
     setComments((prev) => prev.map((c) => (c.id === commentId ? { ...c, ...patch } : c)));
     setRepliesByComment((prev) => {
-      let changed = false;
       const next = {};
+      let changed = false;
       for (const [k, arr] of Object.entries(prev)) {
-        next[k] = arr.map((c) => {
-          if (c.id === commentId) { changed = true; return { ...c, ...patch }; }
-          return c;
-        });
+        const idx = arr.findIndex((c) => c.id === commentId);
+        if (idx === -1) {
+          next[k] = arr;
+        } else {
+          changed = true;
+          const copy = arr.slice();
+          copy[idx] = { ...copy[idx], ...patch };
+          next[k] = copy;
+        }
       }
       return changed ? next : prev;
     });
