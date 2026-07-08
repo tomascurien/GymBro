@@ -48,7 +48,7 @@ const LikedPosts = () => {
           <div className="bg-surface border border-edge rounded-2xl p-10 animate-fade-up">
             <HeartIcon size={48} className="mx-auto mb-4 text-muted" />
             <h1 className="text-2xl font-display font-bold text-ink mb-2">{t('likes.title')}</h1>
-            <p className="text-muted mb-6">{t('routines.loginText')}</p>
+            <p className="text-muted mb-6">{t('likes.loginText')}</p>
             <Link
               to="/login"
               className="inline-block bg-accent hover:bg-accent-hi text-on-accent font-semibold px-6 py-2.5 rounded-full transition-colors"

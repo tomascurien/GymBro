@@ -47,12 +47,14 @@ const es = {
   // Guardadas
   'saved.title': 'Rutinas guardadas',
   'saved.subtitle': 'Las rutinas de otros que marcaste para tener a mano.',
+  'saved.loginText': 'Iniciá sesión para guardar rutinas de otros y tenerlas a mano.',
   'saved.emptyTitle': 'Nada guardado todavía',
   'saved.emptyText': 'Tocá el marcador en una rutina para guardarla acá.',
 
   // Me gusta
   'likes.title': 'Me gusta',
   'likes.subtitle': 'Publicaciones que likeaste. Solo vos ves esta lista.',
+  'likes.loginText': 'Iniciá sesión para dar me gusta y volver a encontrar esos posts acá.',
   'likes.emptyTitle': 'Todavía no likeaste nada',
   'likes.emptyText': 'Los posts que likees van a aparecer acá.',
 
@@ -325,12 +327,14 @@ const en = {
   // Saved
   'saved.title': 'Saved routines',
   'saved.subtitle': "Other people's routines you bookmarked to keep handy.",
+  'saved.loginText': 'Log in to save routines from others and keep them handy.',
   'saved.emptyTitle': 'Nothing saved yet',
   'saved.emptyText': 'Tap the bookmark on a routine to save it here.',
 
   // Likes
   'likes.title': 'Likes',
   'likes.subtitle': 'Posts you liked. Only you can see this list.',
+  'likes.loginText': 'Log in to like posts and find them again here.',
   'likes.emptyTitle': "You haven't liked anything yet",
   'likes.emptyText': 'Posts you like will show up here.',
 
