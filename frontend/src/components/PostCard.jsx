@@ -41,6 +41,11 @@ const PostCard = ({ post, onDelete, onLikeUpdate }) => {
   const [newComment, setNewComment] = useState('');
   const [commentBusy, setCommentBusy] = useState(false);
   const [commentCount, setCommentCount] = useState(post.comments_count || 0);
+  const [repliesByComment, setRepliesByComment] = useState({});
+  const [openReplies, setOpenReplies] = useState(() => new Set());
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [replyBusy, setReplyBusy] = useState(false);
 
   // Manejo seguro del usuario en localStorage
   let currentUser = {};
@@ -141,14 +146,209 @@ const PostCard = ({ post, onDelete, onLikeUpdate }) => {
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
+  // Aplica un patch a un comentario, esté en la lista raíz o dentro de las respuestas
+  const patchComment = (commentId, patch) => {
+    setComments((prev) => prev.map((c) => (c.id === commentId ? { ...c, ...patch } : c)));
+    setRepliesByComment((prev) => {
+      let changed = false;
+      const next = {};
+      for (const [k, arr] of Object.entries(prev)) {
+        next[k] = arr.map((c) => {
+          if (c.id === commentId) { changed = true; return { ...c, ...patch }; }
+          return c;
+        });
+      }
+      return changed ? next : prev;
+    });
+  };
+
+  const handleCommentLike = async (c) => {
+    if (!isLoggedIn) return;
+    const wasLiked = !!c.isLiked;
+    patchComment(c.id, {
+      isLiked: !wasLiked,
+      likes_count: Math.max((c.likes_count || 0) + (wasLiked ? -1 : 1), 0),
+    });
     try {
-      await postsAPI.deleteComment(post.id, commentId);
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
-      setCommentCount((c) => Math.max(c - 1, 0));
+      const res = wasLiked
+        ? await postsAPI.unlikeComment(post.id, c.id)
+        : await postsAPI.likeComment(post.id, c.id);
+      if (res?.data) patchComment(c.id, { isLiked: res.data.isLiked, likes_count: res.data.likes_count });
+    } catch (error) {
+      console.error('Error al dar like al comentario:', error);
+      patchComment(c.id, { isLiked: wasLiked, likes_count: c.likes_count || 0 });
+    }
+  };
+
+  const toggleReplies = async (commentId) => {
+    setOpenReplies((prev) => {
+      const next = new Set(prev);
+      if (next.has(commentId)) next.delete(commentId);
+      else next.add(commentId);
+      return next;
+    });
+    if (!repliesByComment[commentId]) {
+      try {
+        const res = await postsAPI.getReplies(post.id, commentId);
+        setRepliesByComment((prev) => ({ ...prev, [commentId]: res.data || [] }));
+      } catch (error) {
+        console.error('Error al cargar respuestas:', error);
+      }
+    }
+  };
+
+  const handleAddReply = async (e, parentId) => {
+    e.preventDefault();
+    const text = replyText.trim();
+    if (!text || replyBusy) return;
+    setReplyBusy(true);
+    try {
+      const res = await postsAPI.addComment(post.id, text, parentId);
+      setRepliesByComment((prev) => ({ ...prev, [parentId]: [...(prev[parentId] || []), res.data] }));
+      const current = comments.find((c) => c.id === parentId)?.replies_count || 0;
+      patchComment(parentId, { replies_count: current + 1 });
+      setOpenReplies((prev) => new Set(prev).add(parentId));
+      setCommentCount((n) => n + 1);
+      setReplyText('');
+      setReplyingTo(null);
+    } catch (error) {
+      console.error('Error al responder:', error);
+    } finally {
+      setReplyBusy(false);
+    }
+  };
+
+  const handleDeleteComment = async (c, parentId = null) => {
+    try {
+      await postsAPI.deleteComment(post.id, c.id);
+      if (parentId) {
+        setRepliesByComment((prev) => ({
+          ...prev,
+          [parentId]: (prev[parentId] || []).filter((r) => r.id !== c.id),
+        }));
+        const current = comments.find((x) => x.id === parentId)?.replies_count || 1;
+        patchComment(parentId, { replies_count: Math.max(current - 1, 0) });
+        setCommentCount((n) => Math.max(n - 1, 0));
+      } else {
+        const removed = 1 + (c.replies_count || 0);
+        setComments((prev) => prev.filter((x) => x.id !== c.id));
+        setCommentCount((n) => Math.max(n - removed, 0));
+      }
     } catch (error) {
       console.error('Error al eliminar comentario:', error);
     }
+  };
+
+  // Render de un comentario (parentId = null para nivel superior, o el id del raíz si es respuesta)
+  const renderComment = (c, parentId = null) => {
+    const isReply = parentId !== null;
+    const canDeleteComment = currentUser.id === c.user_id || isAdmin;
+    return (
+      <div key={c.id} className="flex items-start gap-2.5">
+        <div
+          className={`${isReply ? 'w-7 h-7' : 'w-8 h-8'} rounded-full bg-raised flex items-center justify-center overflow-hidden border border-edge flex-shrink-0 cursor-pointer`}
+          onClick={() => c.User?.username && navigate(`/profile/${c.User.username}`)}
+        >
+          {c.User?.profile_pic ? (
+            <img src={c.User.profile_pic} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-muted font-bold text-xs">{c.User?.username?.charAt(0).toUpperCase() || 'U'}</span>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="bg-raised rounded-2xl px-3 py-2">
+            <div className="flex items-center gap-1.5 text-xs text-muted mb-0.5">
+              <span
+                className="font-semibold text-ink cursor-pointer hover:underline"
+                onClick={() => c.User?.username && navigate(`/profile/${c.User.username}`)}
+              >
+                {c.User?.name || c.User?.username}
+              </span>
+              <span>·</span>
+              <span>{formatDate(c.created_at)}</span>
+            </div>
+            <p className="text-sm text-ink whitespace-pre-wrap break-words">{c.text}</p>
+          </div>
+
+          {/* Acciones del comentario */}
+          <div className="flex items-center gap-4 mt-1 pl-1 text-xs">
+            <button
+              onClick={() => handleCommentLike(c)}
+              disabled={!isLoggedIn}
+              className={`flex items-center gap-1 font-medium transition-colors ${
+                c.isLiked ? 'text-accent' : 'text-muted hover:text-accent'
+              } ${!isLoggedIn ? 'cursor-not-allowed' : ''}`}
+            >
+              <HeartIcon filled={!!c.isLiked} />
+              {c.likes_count > 0 && <span>{c.likes_count}</span>}
+            </button>
+
+            {isLoggedIn && (
+              <button
+                onClick={() => {
+                  setReplyingTo(parentId ?? c.id);
+                  setReplyText(isReply ? `@${c.User?.username || ''} ` : '');
+                }}
+                className="text-muted hover:text-ink font-medium"
+              >
+                {t('post.reply')}
+              </button>
+            )}
+
+            {canDeleteComment && (
+              <button
+                onClick={() => handleDeleteComment(c, parentId)}
+                className="text-muted hover:text-danger font-medium"
+              >
+                {t('common.delete')}
+              </button>
+            )}
+          </div>
+
+          {/* Toggle de respuestas (solo nivel superior) */}
+          {!isReply && c.replies_count > 0 && (
+            <button
+              onClick={() => toggleReplies(c.id)}
+              className="mt-1 pl-1 text-xs font-semibold text-accent hover:underline"
+            >
+              {openReplies.has(c.id) ? t('post.hideReplies') : t('post.viewReplies', { n: c.replies_count })}
+            </button>
+          )}
+
+          {/* Form de respuesta (se ancla al comentario raíz) */}
+          {!isReply && replyingTo === c.id && isLoggedIn && (
+            <form onSubmit={(e) => handleAddReply(e, c.id)} className="flex items-center gap-2 mt-2">
+              <input
+                autoFocus
+                type="text"
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder={t('post.replyPlaceholder')}
+                className="flex-1 bg-raised border border-edge rounded-full px-3 py-1.5 text-sm text-ink placeholder-muted focus:outline-none focus:border-accent"
+              />
+              <button
+                type="submit"
+                disabled={!replyText.trim() || replyBusy}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-opacity ${
+                  !replyText.trim() || replyBusy
+                    ? 'bg-accent/40 text-canvas cursor-not-allowed'
+                    : 'bg-accent text-canvas hover:opacity-90'
+                }`}
+              >
+                {t('post.commentSend')}
+              </button>
+            </form>
+          )}
+
+          {/* Lista de respuestas */}
+          {!isReply && openReplies.has(c.id) && (
+            <div className="mt-2 pl-3 border-l-2 border-edge/50 space-y-3">
+              {(repliesByComment[c.id] || []).map((r) => renderComment(r, c.id))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   const goToProfile = () => {
@@ -323,52 +523,8 @@ const PostCard = ({ post, onDelete, onLikeUpdate }) => {
           ) : comments.length === 0 ? (
             <p className="text-sm text-muted py-2">{t('post.commentsEmpty')}</p>
           ) : (
-            <div className="space-y-3 pt-1">
-              {comments.map((c) => {
-                const canDeleteComment = currentUser.id === c.user_id || isAdmin;
-                return (
-                  <div key={c.id} className="flex items-start gap-2.5 group">
-                    <div
-                      className="w-8 h-8 rounded-full bg-raised flex items-center justify-center overflow-hidden border border-edge flex-shrink-0 cursor-pointer"
-                      onClick={() => c.User?.username && navigate(`/profile/${c.User.username}`)}
-                    >
-                      {c.User?.profile_pic ? (
-                        <img src={c.User.profile_pic} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-muted font-bold text-xs">
-                          {c.User?.username?.charAt(0).toUpperCase() || 'U'}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="bg-raised rounded-2xl px-3 py-2">
-                        <div className="flex items-center gap-1.5 text-xs text-muted mb-0.5">
-                          <span
-                            className="font-semibold text-ink cursor-pointer hover:underline"
-                            onClick={() => c.User?.username && navigate(`/profile/${c.User.username}`)}
-                          >
-                            {c.User?.name || c.User?.username}
-                          </span>
-                          <span>·</span>
-                          <span>{formatDate(c.created_at)}</span>
-                        </div>
-                        <p className="text-sm text-ink whitespace-pre-wrap break-words">{c.text}</p>
-                      </div>
-                    </div>
-                    {canDeleteComment && (
-                      <button
-                        onClick={() => handleDeleteComment(c.id)}
-                        title={t('post.commentDeleteAria')}
-                        className="text-muted/60 hover:text-danger transition-colors p-1 rounded-full opacity-0 group-hover:opacity-100"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="space-y-4 pt-1">
+              {comments.map((c) => renderComment(c, null))}
             </div>
           )}
         </div>

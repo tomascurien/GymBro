@@ -11,6 +11,7 @@ const FavoriteRoutine = require('./FavouriteRoutines');
 const Like = require('./Like');
 const Comment = require('./Comment');
 const Notification = require('./Notification');
+const CommentLike = require('./CommentLike');
 
 // const Subscription = require('./Subscription');
 // const Payment = require('./models/Payment');
@@ -94,6 +95,16 @@ Comment.belongsTo(Post, { foreignKey: 'post_id' });
 Notification.belongsTo(User, { foreignKey: 'actor_id', as: 'Actor' });
 Notification.belongsTo(Post, { foreignKey: 'post_id' });
 
+// Respuestas a comentarios (un solo nivel; parent_id apunta al comentario raíz)
+Comment.hasMany(Comment, { foreignKey: 'parent_id', as: 'Replies', onDelete: 'CASCADE' });
+Comment.belongsTo(Comment, { foreignKey: 'parent_id', as: 'Parent' });
+
+// Likes de comentarios
+User.hasMany(CommentLike, { foreignKey: 'user_id' });
+CommentLike.belongsTo(User, { foreignKey: 'user_id' });
+Comment.hasMany(CommentLike, { foreignKey: 'comment_id', onDelete: 'CASCADE' });
+CommentLike.belongsTo(Comment, { foreignKey: 'comment_id' });
+
 // Sets
 RoutineExercise.hasMany(RoutineSet, { foreignKey: 'routine_exercise_id', onDelete: 'CASCADE' });
 RoutineSet.belongsTo(RoutineExercise, { foreignKey: 'routine_exercise_id' });
@@ -112,5 +123,6 @@ module.exports = {
   FavoriteRoutine,
   Like,
   Comment,
-  Notification
+  Notification,
+  CommentLike
 };

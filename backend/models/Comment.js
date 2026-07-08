@@ -11,6 +11,18 @@ const Comment = sequelize.define('Comment', {
     type: DataTypes.TEXT,
     allowNull: false,
   },
+  parent_id: {          // null = comentario raíz; con valor = es una respuesta
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  likes_count: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
+  replies_count: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
   created_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,

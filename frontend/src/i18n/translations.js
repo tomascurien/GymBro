@@ -153,6 +153,12 @@ const es = {
   'notifications.loginText': 'Iniciá sesión para ver tus notificaciones.',
   'notif.like': 'le dio me gusta a tu publicación',
   'notif.comment': 'comentó tu publicación',
+  'notif.reply': 'respondió a tu comentario',
+  'notif.comment_like': 'le dio me gusta a tu comentario',
+  'post.reply': 'Responder',
+  'post.replyPlaceholder': 'Escribí una respuesta...',
+  'post.viewReplies': 'Ver respuestas ({n})',
+  'post.hideReplies': 'Ocultar respuestas',
 
   // Compose
   'compose.title': 'Nueva publicación',
@@ -449,6 +455,12 @@ const en = {
   'notifications.loginText': 'Log in to see your notifications.',
   'notif.like': 'liked your post',
   'notif.comment': 'commented on your post',
+  'notif.reply': 'replied to your comment',
+  'notif.comment_like': 'liked your comment',
+  'post.reply': 'Reply',
+  'post.replyPlaceholder': 'Write a reply...',
+  'post.viewReplies': 'View replies ({n})',
+  'post.hideReplies': 'Hide replies',
 
   // Compose
   'compose.title': 'New post',

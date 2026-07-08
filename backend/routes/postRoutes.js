@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const { authMiddleware, SECRET_KEY } = require('../middleware/authMiddleware');
-const { Post, User, Follower, Like, Comment, Notification } = require("../models/index");
+const { Post, User, Follower, Like, Comment, Notification, CommentLike } = require("../models/index");
 const { Op } = require("sequelize");
 const { upload, uploadFileToSupabase } = require('../services/uploadService');
 const { TOPICS, TAG_TO_TOPIC } = require('../constants/topics');
@@ -145,23 +145,52 @@ router.delete("/:id/like", authMiddleware, async (req, res) => {
 
 // ----- Comentarios -----
 
-// Listar los comentarios de un post (público, cronológico)
-router.get("/:id/comments", async (req, res) => {
+// Marca isLiked en cada comentario según el usuario autenticado (si lo hay)
+const annotateCommentLikes = async (comments, userId) => {
+  const plain = comments.map((c) => (c.get ? c.get({ plain: true }) : c));
+  if (!userId || plain.length === 0) {
+    return plain.map((c) => ({ ...c, isLiked: false }));
+  }
+  const likes = await CommentLike.findAll({
+    where: { user_id: userId, comment_id: { [Op.in]: plain.map((c) => c.id) } },
+    attributes: ['comment_id'],
+  });
+  const liked = new Set(likes.map((l) => l.comment_id));
+  return plain.map((c) => ({ ...c, isLiked: liked.has(c.id) }));
+};
+
+// Listar comentarios de nivel superior de un post (público, cronológico)
+router.get("/:id/comments", optionalAuth, async (req, res) => {
   try {
     const postId = parseInt(req.params.id);
     const comments = await Comment.findAll({
-      where: { post_id: postId },
+      where: { post_id: postId, parent_id: null },
       include: [{ model: User, attributes: USER_ATTRS }],
       order: [["id", "ASC"]],
     });
-    res.json(comments);
+    res.json(await annotateCommentLikes(comments, req.user?.id || null));
   } catch (error) {
     console.error("Error al obtener comentarios:", error);
     res.status(500).json({ message: "Error al obtener los comentarios." });
   }
 });
 
-// Crear un comentario (requiere login)
+// Listar respuestas de un comentario (público, cronológico)
+router.get("/:id/comments/:commentId/replies", optionalAuth, async (req, res) => {
+  try {
+    const replies = await Comment.findAll({
+      where: { parent_id: parseInt(req.params.commentId) },
+      include: [{ model: User, attributes: USER_ATTRS }],
+      order: [["id", "ASC"]],
+    });
+    res.json(await annotateCommentLikes(replies, req.user?.id || null));
+  } catch (error) {
+    console.error("Error al obtener respuestas:", error);
+    res.status(500).json({ message: "Error al obtener las respuestas." });
+  }
+});
+
+// Crear un comentario o una respuesta (requiere login)
 router.post("/:id/comments", authMiddleware, async (req, res) => {
   try {
     const postId = parseInt(req.params.id);
@@ -173,15 +202,39 @@ router.post("/:id/comments", authMiddleware, async (req, res) => {
     const post = await Post.findByPk(postId);
     if (!post) return res.status(404).json({ message: "Post no encontrado." });
 
+    // Un solo nivel: la respuesta se cuelga del comentario raíz del hilo,
+    // pero la notificación va a quien realmente respondimos (target).
+    let target = null; // comentario al que se responde
+    let rootId = null; // raíz del hilo (threading plano)
+    if (req.body.parent_id) {
+      target = await Comment.findByPk(parseInt(req.body.parent_id));
+      if (!target) return res.status(404).json({ message: "Comentario padre no encontrado." });
+      rootId = target.parent_id || target.id;
+    }
+
     const comment = await Comment.create({
       post_id: postId,
       user_id: req.user.id,
       text,
+      parent_id: rootId,
     });
     await post.increment("comments_count");
 
-    // Notificar al dueño del post (nunca a uno mismo)
-    if (post.user_id !== req.user.id) {
+    if (target) {
+      const root = await Comment.findByPk(rootId);
+      if (root) await root.increment("replies_count");
+      // Notificar a quien respondimos (nunca a uno mismo)
+      if (target.user_id !== req.user.id) {
+        await Notification.create({
+          user_id: target.user_id,
+          actor_id: req.user.id,
+          type: 'reply',
+          post_id: postId,
+          comment_id: comment.id,
+        });
+      }
+    } else if (post.user_id !== req.user.id) {
+      // Comentario de nivel superior: notificar al dueño del post
       await Notification.create({
         user_id: post.user_id,
         actor_id: req.user.id,
@@ -201,7 +254,58 @@ router.post("/:id/comments", authMiddleware, async (req, res) => {
   }
 });
 
-// Eliminar un comentario (autor o admin)
+// Like a un comentario
+router.post("/:id/comments/:commentId/like", authMiddleware, async (req, res) => {
+  try {
+    const commentId = parseInt(req.params.commentId);
+    const comment = await Comment.findByPk(commentId);
+    if (!comment) return res.status(404).json({ message: "Comentario no encontrado." });
+
+    const [, created] = await CommentLike.findOrCreate({
+      where: { user_id: req.user.id, comment_id: commentId },
+    });
+    if (created) {
+      await comment.increment("likes_count");
+      await comment.reload();
+      if (comment.user_id !== req.user.id) {
+        await Notification.create({
+          user_id: comment.user_id,
+          actor_id: req.user.id,
+          type: 'comment_like',
+          post_id: comment.post_id,
+          comment_id: comment.id,
+        });
+      }
+    }
+    res.json({ isLiked: true, likes_count: comment.likes_count });
+  } catch (error) {
+    console.error("Error al dar like al comentario:", error);
+    res.status(500).json({ message: "Error al dar like al comentario." });
+  }
+});
+
+// Quitar like a un comentario
+router.delete("/:id/comments/:commentId/like", authMiddleware, async (req, res) => {
+  try {
+    const commentId = parseInt(req.params.commentId);
+    const comment = await Comment.findByPk(commentId);
+    if (!comment) return res.status(404).json({ message: "Comentario no encontrado." });
+
+    const deleted = await CommentLike.destroy({
+      where: { user_id: req.user.id, comment_id: commentId },
+    });
+    if (deleted && comment.likes_count > 0) {
+      await comment.decrement("likes_count");
+      await comment.reload();
+    }
+    res.json({ isLiked: false, likes_count: comment.likes_count });
+  } catch (error) {
+    console.error("Error al quitar like del comentario:", error);
+    res.status(500).json({ message: "Error al quitar like del comentario." });
+  }
+});
+
+// Eliminar un comentario o respuesta (autor o admin)
 router.delete("/:id/comments/:commentId", authMiddleware, async (req, res) => {
   try {
     const comment = await Comment.findByPk(parseInt(req.params.commentId));
@@ -212,9 +316,26 @@ router.delete("/:id/comments/:commentId", authMiddleware, async (req, res) => {
     }
 
     const post = await Post.findByPk(comment.post_id);
-    await comment.destroy();
-    if (post && post.comments_count > 0) {
-      await post.decrement("comments_count");
+
+    if (comment.parent_id) {
+      // Respuesta: borra sus likes, ella misma, y ajusta contadores
+      await CommentLike.destroy({ where: { comment_id: comment.id } });
+      await comment.destroy();
+      const parent = await Comment.findByPk(comment.parent_id);
+      if (parent && parent.replies_count > 0) await parent.decrement("replies_count");
+      if (post && post.comments_count > 0) await post.decrement("comments_count");
+    } else {
+      // Comentario raíz: borra sus respuestas y todos los likes involucrados
+      const replies = await Comment.findAll({ where: { parent_id: comment.id }, attributes: ['id'] });
+      const replyIds = replies.map((r) => r.id);
+      const allIds = [comment.id, ...replyIds];
+      await CommentLike.destroy({ where: { comment_id: { [Op.in]: allIds } } });
+      if (replyIds.length) await Comment.destroy({ where: { id: { [Op.in]: replyIds } } });
+      await comment.destroy();
+      if (post) {
+        const newCount = Math.max((post.comments_count || 0) - (1 + replyIds.length), 0);
+        await post.update({ comments_count: newCount });
+      }
     }
 
     res.json({ message: "Comentario eliminado." });

@@ -45,7 +45,12 @@ const Notifications = () => {
     return new Date(dateString).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  const messageFor = (type) => (type === 'comment' ? t('notif.comment') : t('notif.like'));
+  const messageFor = (type) => {
+    if (type === 'comment') return t('notif.comment');
+    if (type === 'reply') return t('notif.reply');
+    if (type === 'comment_like') return t('notif.comment_like');
+    return t('notif.like');
+  };
 
   if (!isLoggedIn) {
     return (
