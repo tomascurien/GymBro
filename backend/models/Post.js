@@ -36,6 +36,10 @@ const Post = sequelize.define("Post", {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
+  comments_count: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
   // Tema del post (slug de constants/topics.js); alimenta el feed "Para vos"
   topic: {
     type: DataTypes.STRING,

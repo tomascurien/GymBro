@@ -137,6 +137,13 @@ const es = {
   'post.deleteAria': 'Eliminar publicación',
   'post.likeAria': 'Me gusta',
   'post.loginToLike': 'Iniciá sesión para dar me gusta',
+  'post.commentAria': 'Comentar',
+  'post.loginToComment': 'Iniciá sesión para comentar',
+  'post.commentPlaceholder': 'Escribí un comentario...',
+  'post.commentSend': 'Comentar',
+  'post.commentsLoading': 'Cargando comentarios...',
+  'post.commentsEmpty': 'Todavía no hay comentarios. Sé el primero.',
+  'post.commentDeleteAria': 'Eliminar comentario',
 
   // Compose
   'compose.title': 'Nueva publicación',
@@ -417,6 +424,13 @@ const en = {
   'post.deleteAria': 'Delete post',
   'post.likeAria': 'Like',
   'post.loginToLike': 'Log in to like posts',
+  'post.commentAria': 'Comment',
+  'post.loginToComment': 'Log in to comment',
+  'post.commentPlaceholder': 'Write a comment...',
+  'post.commentSend': 'Comment',
+  'post.commentsLoading': 'Loading comments...',
+  'post.commentsEmpty': 'No comments yet. Be the first.',
+  'post.commentDeleteAria': 'Delete comment',
 
   // Compose
   'compose.title': 'New post',

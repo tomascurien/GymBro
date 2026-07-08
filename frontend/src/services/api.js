@@ -59,6 +59,9 @@ export const postsAPI = {
   likePost: (postId) => api.post(`/posts/${postId}/like`),
   unlikePost: (postId) => api.delete(`/posts/${postId}/like`),
   getLikedPosts: () => api.get(`/posts/liked`),
+  getComments: (postId) => api.get(`/posts/${postId}/comments`),
+  addComment: (postId, text) => api.post(`/posts/${postId}/comments`, { text }),
+  deleteComment: (postId, commentId) => api.delete(`/posts/${postId}/comments/${commentId}`),
 };
 
 //Ejercicios endpoints

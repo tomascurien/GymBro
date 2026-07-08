@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const { authMiddleware, SECRET_KEY } = require('../middleware/authMiddleware');
-const { Post, User, Follower, Like } = require("../models/index");
+const { Post, User, Follower, Like, Comment } = require("../models/index");
 const { Op } = require("sequelize");
 const { upload, uploadFileToSupabase } = require('../services/uploadService');
 const { TOPICS, TAG_TO_TOPIC } = require('../constants/topics');
@@ -131,6 +131,76 @@ router.delete("/:id/like", authMiddleware, async (req, res) => {
   } catch (error) {
     console.error("Error al quitar like:", error);
     res.status(500).json({ message: "Error al quitar like." });
+  }
+});
+
+// ----- Comentarios -----
+
+// Listar los comentarios de un post (público, cronológico)
+router.get("/:id/comments", async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id);
+    const comments = await Comment.findAll({
+      where: { post_id: postId },
+      include: [{ model: User, attributes: USER_ATTRS }],
+      order: [["id", "ASC"]],
+    });
+    res.json(comments);
+  } catch (error) {
+    console.error("Error al obtener comentarios:", error);
+    res.status(500).json({ message: "Error al obtener los comentarios." });
+  }
+});
+
+// Crear un comentario (requiere login)
+router.post("/:id/comments", authMiddleware, async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id);
+    const text = (req.body.text || "").trim();
+    if (!text) {
+      return res.status(400).json({ message: "El comentario no puede estar vacío." });
+    }
+
+    const post = await Post.findByPk(postId);
+    if (!post) return res.status(404).json({ message: "Post no encontrado." });
+
+    const comment = await Comment.create({
+      post_id: postId,
+      user_id: req.user.id,
+      text,
+    });
+    await post.increment("comments_count");
+
+    const withUser = await Comment.findByPk(comment.id, {
+      include: [{ model: User, attributes: USER_ATTRS }],
+    });
+    res.status(201).json(withUser);
+  } catch (error) {
+    console.error("Error al crear comentario:", error);
+    res.status(500).json({ message: "Error al crear el comentario." });
+  }
+});
+
+// Eliminar un comentario (autor o admin)
+router.delete("/:id/comments/:commentId", authMiddleware, async (req, res) => {
+  try {
+    const comment = await Comment.findByPk(parseInt(req.params.commentId));
+    if (!comment) return res.status(404).json({ message: "Comentario no encontrado." });
+
+    if (comment.user_id !== req.user.id && req.user.role !== "admin") {
+      return res.status(403).json({ message: "No tenés permiso para eliminar este comentario." });
+    }
+
+    const post = await Post.findByPk(comment.post_id);
+    await comment.destroy();
+    if (post && post.comments_count > 0) {
+      await post.decrement("comments_count");
+    }
+
+    res.json({ message: "Comentario eliminado." });
+  } catch (error) {
+    console.error("Error al eliminar comentario:", error);
+    res.status(500).json({ message: "Error al eliminar el comentario." });
   }
 });
 

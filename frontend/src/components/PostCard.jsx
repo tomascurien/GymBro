@@ -19,11 +19,28 @@ const HeartIcon = ({ filled }) => (
   </svg>
 );
 
+const CommentIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.9A7.6 7.6 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+    />
+  </svg>
+);
+
 const PostCard = ({ post, onDelete, onLikeUpdate }) => {
   const navigate = useNavigate();
   const { t, locale } = useI18n();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [likeBusy, setLikeBusy] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [commentBusy, setCommentBusy] = useState(false);
+  const [commentCount, setCommentCount] = useState(post.comments_count || 0);
 
   // Manejo seguro del usuario en localStorage
   let currentUser = {};
@@ -87,6 +104,50 @@ const PostCard = ({ post, onDelete, onLikeUpdate }) => {
       }
     } finally {
       setLikeBusy(false);
+    }
+  };
+
+  const toggleComments = async () => {
+    const willOpen = !commentsOpen;
+    setCommentsOpen(willOpen);
+    if (willOpen && !commentsLoaded) {
+      setCommentsLoading(true);
+      try {
+        const res = await postsAPI.getComments(post.id);
+        setComments(res.data || []);
+        setCommentsLoaded(true);
+      } catch (error) {
+        console.error('Error al cargar comentarios:', error);
+      } finally {
+        setCommentsLoading(false);
+      }
+    }
+  };
+
+  const handleAddComment = async (e) => {
+    e.preventDefault();
+    const text = newComment.trim();
+    if (!text || commentBusy) return;
+    setCommentBusy(true);
+    try {
+      const res = await postsAPI.addComment(post.id, text);
+      setComments((prev) => [...prev, res.data]);
+      setCommentCount((c) => c + 1);
+      setNewComment('');
+    } catch (error) {
+      console.error('Error al comentar:', error);
+    } finally {
+      setCommentBusy(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await postsAPI.deleteComment(post.id, commentId);
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+      setCommentCount((c) => Math.max(c - 1, 0));
+    } catch (error) {
+      console.error('Error al eliminar comentario:', error);
     }
   };
 
@@ -214,7 +275,104 @@ const PostCard = ({ post, onDelete, onLikeUpdate }) => {
           <HeartIcon filled={!!post.isLiked} />
           <span>{post.likes_count || 0}</span>
         </button>
+
+        <button
+          onClick={toggleComments}
+          title={t('post.commentAria')}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 ml-1 rounded-full text-sm font-medium transition-colors ${
+            commentsOpen
+              ? 'text-accent bg-accent/10'
+              : 'text-muted hover:text-accent hover:bg-accent/10'
+          }`}
+        >
+          <CommentIcon />
+          <span>{commentCount}</span>
+        </button>
       </div>
+
+      {/* Comentarios */}
+      {commentsOpen && (
+        <div className="px-4 pb-4 border-t border-edge/70">
+          {isLoggedIn ? (
+            <form onSubmit={handleAddComment} className="flex items-center gap-2 py-3">
+              <input
+                type="text"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder={t('post.commentPlaceholder')}
+                className="flex-1 bg-raised border border-edge rounded-full px-4 py-2 text-sm text-ink placeholder-muted focus:outline-none focus:border-accent"
+              />
+              <button
+                type="submit"
+                disabled={!newComment.trim() || commentBusy}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-opacity ${
+                  !newComment.trim() || commentBusy
+                    ? 'bg-accent/40 text-canvas cursor-not-allowed'
+                    : 'bg-accent text-canvas hover:opacity-90'
+                }`}
+              >
+                {t('post.commentSend')}
+              </button>
+            </form>
+          ) : (
+            <p className="py-3 text-sm text-muted">{t('post.loginToComment')}</p>
+          )}
+
+          {commentsLoading ? (
+            <p className="text-sm text-muted py-2">{t('post.commentsLoading')}</p>
+          ) : comments.length === 0 ? (
+            <p className="text-sm text-muted py-2">{t('post.commentsEmpty')}</p>
+          ) : (
+            <div className="space-y-3 pt-1">
+              {comments.map((c) => {
+                const canDeleteComment = currentUser.id === c.user_id || isAdmin;
+                return (
+                  <div key={c.id} className="flex items-start gap-2.5 group">
+                    <div
+                      className="w-8 h-8 rounded-full bg-raised flex items-center justify-center overflow-hidden border border-edge flex-shrink-0 cursor-pointer"
+                      onClick={() => c.User?.username && navigate(`/profile/${c.User.username}`)}
+                    >
+                      {c.User?.profile_pic ? (
+                        <img src={c.User.profile_pic} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-muted font-bold text-xs">
+                          {c.User?.username?.charAt(0).toUpperCase() || 'U'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="bg-raised rounded-2xl px-3 py-2">
+                        <div className="flex items-center gap-1.5 text-xs text-muted mb-0.5">
+                          <span
+                            className="font-semibold text-ink cursor-pointer hover:underline"
+                            onClick={() => c.User?.username && navigate(`/profile/${c.User.username}`)}
+                          >
+                            {c.User?.name || c.User?.username}
+                          </span>
+                          <span>·</span>
+                          <span>{formatDate(c.created_at)}</span>
+                        </div>
+                        <p className="text-sm text-ink whitespace-pre-wrap break-words">{c.text}</p>
+                      </div>
+                    </div>
+                    {canDeleteComment && (
+                      <button
+                        onClick={() => handleDeleteComment(c.id)}
+                        title={t('post.commentDeleteAria')}
+                        className="text-muted/60 hover:text-danger transition-colors p-1 rounded-full opacity-0 group-hover:opacity-100"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Modal de confirmación de eliminación */}
       {showDeleteConfirm && (
