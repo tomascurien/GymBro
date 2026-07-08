@@ -11,6 +11,7 @@ import Routines from './pages/Routines';
 import RoutineDetail from './pages/RoutineDetail';
 import SavedRoutines from './pages/SavedRoutines';
 import LikedPosts from './pages/LikedPosts';
+import Notifications from './pages/Notifications';
 import VerifyEmail from './pages/VerifyEmail';
 import { useI18n } from './i18n/I18nContext';
 
@@ -122,6 +123,7 @@ function App() {
         <Route path="/routines" element={<Routines />} />
         <Route path="/saved" element={<SavedRoutines />} />
         <Route path="/likes" element={<LikedPosts />} />
+        <Route path="/notifications" element={<Notifications />} />
 
         {/* Perfil - público/privado según sesión */}
         <Route path="/profile/:username" element={<Profile />} />

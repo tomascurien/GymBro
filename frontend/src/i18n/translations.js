@@ -145,6 +145,15 @@ const es = {
   'post.commentsEmpty': 'Todavía no hay comentarios. Sé el primero.',
   'post.commentDeleteAria': 'Eliminar comentario',
 
+  // Notificaciones
+  'nav.notifications': 'Notificaciones',
+  'notifications.title': 'Notificaciones',
+  'notifications.subtitle': 'Lo que pasa con tus publicaciones.',
+  'notifications.empty': 'Todavía no tenés notificaciones.',
+  'notifications.loginText': 'Iniciá sesión para ver tus notificaciones.',
+  'notif.like': 'le dio me gusta a tu publicación',
+  'notif.comment': 'comentó tu publicación',
+
   // Compose
   'compose.title': 'Nueva publicación',
   'compose.placeholder': 'Compartí tu progreso, una rutina, algo que aprendiste...',
@@ -431,6 +440,15 @@ const en = {
   'post.commentsLoading': 'Loading comments...',
   'post.commentsEmpty': 'No comments yet. Be the first.',
   'post.commentDeleteAria': 'Delete comment',
+
+  // Notifications
+  'nav.notifications': 'Notifications',
+  'notifications.title': 'Notifications',
+  'notifications.subtitle': "What's happening with your posts.",
+  'notifications.empty': 'No notifications yet.',
+  'notifications.loginText': 'Log in to see your notifications.',
+  'notif.like': 'liked your post',
+  'notif.comment': 'commented on your post',
 
   // Compose
   'compose.title': 'New post',

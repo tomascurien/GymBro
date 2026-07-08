@@ -111,4 +111,11 @@ export const usersAPI = {
   // No hay search por ahora
 };
 
+// Notificaciones endpoints
+export const notificationsAPI = {
+  getNotifications: () => api.get('/notifications'),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markAllRead: () => api.post('/notifications/read'),
+};
+
 export default api;

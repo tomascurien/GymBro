@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const { authMiddleware, SECRET_KEY } = require('../middleware/authMiddleware');
-const { Post, User, Follower, Like, Comment } = require("../models/index");
+const { Post, User, Follower, Like, Comment, Notification } = require("../models/index");
 const { Op } = require("sequelize");
 const { upload, uploadFileToSupabase } = require('../services/uploadService');
 const { TOPICS, TAG_TO_TOPIC } = require('../constants/topics');
@@ -102,6 +102,15 @@ router.post("/:id/like", authMiddleware, async (req, res) => {
     if (created) {
       await post.increment('likes_count');
       await post.reload();
+      // Notificar al dueño del post (nunca a uno mismo)
+      if (post.user_id !== req.user.id) {
+        await Notification.create({
+          user_id: post.user_id,
+          actor_id: req.user.id,
+          type: 'like',
+          post_id: post.id,
+        });
+      }
     }
 
     res.json({ isLiked: true, likes_count: post.likes_count });
@@ -170,6 +179,17 @@ router.post("/:id/comments", authMiddleware, async (req, res) => {
       text,
     });
     await post.increment("comments_count");
+
+    // Notificar al dueño del post (nunca a uno mismo)
+    if (post.user_id !== req.user.id) {
+      await Notification.create({
+        user_id: post.user_id,
+        actor_id: req.user.id,
+        type: 'comment',
+        post_id: post.id,
+        comment_id: comment.id,
+      });
+    }
 
     const withUser = await Comment.findByPk(comment.id, {
       include: [{ model: User, attributes: USER_ATTRS }],

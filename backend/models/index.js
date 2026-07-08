@@ -10,6 +10,7 @@ const RoutineSet = require('./RoutineSet');
 const FavoriteRoutine = require('./FavouriteRoutines');
 const Like = require('./Like');
 const Comment = require('./Comment');
+const Notification = require('./Notification');
 
 // const Subscription = require('./Subscription');
 // const Payment = require('./models/Payment');
@@ -89,6 +90,10 @@ Comment.belongsTo(User, { foreignKey: 'user_id' });
 Post.hasMany(Comment, { foreignKey: 'post_id', onDelete: 'CASCADE' });
 Comment.belongsTo(Post, { foreignKey: 'post_id' });
 
+// Notificaciones (actor_id = quien la genera; user_id = destinatario)
+Notification.belongsTo(User, { foreignKey: 'actor_id', as: 'Actor' });
+Notification.belongsTo(Post, { foreignKey: 'post_id' });
+
 // Sets
 RoutineExercise.hasMany(RoutineSet, { foreignKey: 'routine_exercise_id', onDelete: 'CASCADE' });
 RoutineSet.belongsTo(RoutineExercise, { foreignKey: 'routine_exercise_id' });
@@ -106,5 +111,6 @@ module.exports = {
   RoutineSet,
   FavoriteRoutine,
   Like,
-  Comment
+  Comment,
+  Notification
 };
