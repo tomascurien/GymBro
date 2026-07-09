@@ -84,6 +84,13 @@ export const routinesAPI = {
   copyRoutine: (routineId) => api.post(`/routines/${routineId}/copy`),
 };
 
+// Registros de progreso (Track your progress)
+export const logsAPI = {
+  createLog: (data) => api.post('/logs', data),
+  getSummary: (routineId) => api.get('/logs/summary', { params: { routine_id: routineId } }),
+  getExerciseHistory: (exerciseId) => api.get(`/logs/exercise/${exerciseId}`),
+};
+
 // Users endpoints
 export const usersAPI = {
   getProfile: (username) => {

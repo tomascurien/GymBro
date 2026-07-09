@@ -290,6 +290,19 @@ const es = {
   'routineDetail.saved': 'Guardada',
   'routineDetail.save': 'Guardar',
 
+  // Track your progress
+  'log.title': 'Tu progreso',
+  'log.register': 'Registrar',
+  'log.registering': 'Guardando...',
+  'log.registered': 'Registrado ✓',
+  'log.error': 'No se pudo registrar.',
+  'log.last': 'Último',
+  'log.vsPrev': 'vs. anterior',
+  'log.thisMonth': 'este mes',
+  'log.pr': 'PR',
+  'log.noneYet': 'Registrá tu primer peso y empezá a trackear tu progreso.',
+  'log.noChange': 'igual',
+
   // Grupos musculares (IDs de Wger)
   'muscle.10': 'Abdominales',
   'muscle.8': 'Brazos',
@@ -591,6 +604,19 @@ const en = {
   'routineDetail.deleteConfirmText': 'This action cannot be undone.',
   'routineDetail.saved': 'Saved',
   'routineDetail.save': 'Save',
+
+  // Track your progress
+  'log.title': 'Your progress',
+  'log.register': 'Log it',
+  'log.registering': 'Saving...',
+  'log.registered': 'Logged ✓',
+  'log.error': 'Could not save the log.',
+  'log.last': 'Last',
+  'log.vsPrev': 'vs. previous',
+  'log.thisMonth': 'this month',
+  'log.pr': 'PR',
+  'log.noneYet': 'Log your first weight and start tracking your progress.',
+  'log.noChange': 'no change',
 
   // Muscle groups (Wger IDs)
   'muscle.10': 'Abs',

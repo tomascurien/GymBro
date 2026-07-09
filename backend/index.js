@@ -8,6 +8,7 @@ const postRoutes = require("./routes/postRoutes");
 const exerciseRoutes = require("./routes/exercisesRoutes");
 const routineRoutes = require("./routes/routineRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const logRoutes = require("./routes/logRoutes");
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/exercises", exerciseRoutes);
 app.use("/api/routines", routineRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/logs", logRoutes);
 // Test de conexión
 app.get('/', (req, res) => {
   res.send('Forma API funcionando');

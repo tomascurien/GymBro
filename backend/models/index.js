@@ -12,6 +12,7 @@ const Like = require('./Like');
 const Comment = require('./Comment');
 const Notification = require('./Notification');
 const CommentLike = require('./CommentLike');
+const ExerciseLog = require('./ExerciseLog');
 
 // const Subscription = require('./Subscription');
 // const Payment = require('./models/Payment');
@@ -108,6 +109,13 @@ CommentLike.belongsTo(Comment, { foreignKey: 'comment_id' });
 // Sets
 RoutineExercise.hasMany(RoutineSet, { foreignKey: 'routine_exercise_id', onDelete: 'CASCADE' });
 RoutineSet.belongsTo(RoutineExercise, { foreignKey: 'routine_exercise_id' });
+
+// Registros de progreso (capa personal, independiente de las rutinas)
+User.hasMany(ExerciseLog, { foreignKey: 'user_id' });
+ExerciseLog.belongsTo(User, { foreignKey: 'user_id' });
+Exercise.hasMany(ExerciseLog, { foreignKey: 'exercise_id' });
+ExerciseLog.belongsTo(Exercise, { foreignKey: 'exercise_id' });
+ExerciseLog.belongsTo(RoutineExercise, { foreignKey: 'routine_exercise_id', onDelete: 'SET NULL' });
 console.log("Asociaciones definidas.");
 
 module.exports = {
@@ -124,5 +132,6 @@ module.exports = {
   Like,
   Comment,
   Notification,
-  CommentLike
+  CommentLike,
+  ExerciseLog
 };

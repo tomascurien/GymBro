@@ -4,7 +4,7 @@
 // (sets × reps · kg). Acciones: guardar/copiar (ajenas) o eliminar (propias).
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { routinesAPI } from '../services/api';
+import { routinesAPI, logsAPI } from '../services/api';
 import { useI18n } from '../i18n/I18nContext';
 import { AlertCircleIcon } from '../components/Icons';
 
@@ -21,7 +21,143 @@ const Chevron = ({ open }) => (
   </svg>
 );
 
-const ExerciseRow = ({ item, t }) => {
+// Formatea un delta de peso: +2.5 kg / −2.5 kg (sin decimales de más)
+const fmtDelta = (delta) => {
+  const rounded = Math.round(delta * 10) / 10;
+  const abs = Math.abs(rounded) % 1 === 0 ? Math.abs(rounded).toFixed(0) : Math.abs(rounded).toFixed(1);
+  return `${rounded > 0 ? '+' : '−'}${abs} kg`;
+};
+
+const fmtKg = (w) => {
+  const n = parseFloat(w);
+  return `${n % 1 === 0 ? n.toFixed(0) : n.toFixed(1)} kg`;
+};
+
+// Bloque "Tu progreso": línea de progreso + registro rápido (el hábito de 2 segundos)
+const ProgressBlock = ({ item, log, onLogged }) => {
+  const { t, locale } = useI18n();
+  const [weight, setWeight] = useState(log?.last?.weight_kg ?? item.weight_kg ?? '');
+  const [reps, setReps] = useState(log?.last?.reps ?? item.reps ?? '');
+  const [sets, setSets] = useState(log?.last?.sets ?? item.RoutineSets?.length ?? 3);
+  const [state, setState] = useState('idle'); // idle | busy | done | error
+  const touched = React.useRef(false);
+
+  // Si el resumen llega después de expandir, prefillear con el último registro
+  // (sin pisar valores que el usuario ya haya tocado)
+  useEffect(() => {
+    if (log?.last && !touched.current && state === 'idle') {
+      setWeight(log.last.weight_kg);
+      setReps(log.last.reps);
+      setSets(log.last.sets);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [log?.last?.created_at]);
+
+  const relTime = (dateString) => {
+    const diff = Math.floor((Date.now() - new Date(dateString)) / 1000);
+    if (diff < 3600) return t('post.justNow');
+    if (diff < 86400) return t('post.hoursAgo', { n: Math.floor(diff / 3600) });
+    if (diff < 604800) return t('post.daysAgo', { n: Math.floor(diff / 86400) });
+    return new Date(dateString).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (state === 'busy') return;
+    setState('busy');
+    try {
+      const res = await logsAPI.createLog({
+        exercise_id: item.exercise_id,
+        routine_exercise_id: item.id,
+        weight_kg: weight,
+        reps,
+        sets,
+      });
+      onLogged(item.exercise_id, res.data);
+      setState('done');
+      setTimeout(() => setState('idle'), 2500);
+    } catch (err) {
+      console.error('Error al registrar:', err);
+      setState('error');
+      setTimeout(() => setState('idle'), 3000);
+    }
+  };
+
+  const last = log?.last;
+  const deltaPrev = last && log?.prev ? parseFloat(last.weight_kg) - parseFloat(log.prev.weight_kg) : null;
+  const deltaMonth = last && log?.monthAgo ? parseFloat(last.weight_kg) - parseFloat(log.monthAgo.weight_kg) : null;
+  const deltaClass = (d) => (d > 0 ? 'text-accent font-semibold' : 'text-muted');
+
+  const inputClass =
+    'w-16 border border-edge rounded-lg p-1.5 bg-surface text-ink text-center text-sm focus:outline-none focus:ring-2 focus:ring-accent';
+
+  return (
+    <div className="mt-4 bg-raised border border-edge rounded-xl p-3.5">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted mb-2">{t('log.title')}</p>
+
+      {/* Línea de progreso */}
+      {last ? (
+        <p className="text-sm text-ink mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span>
+            <span className="text-muted">{t('log.last')}:</span>{' '}
+            <span className="font-semibold">{fmtKg(last.weight_kg)} × {last.reps}</span>{' '}
+            <span className="text-muted">· {relTime(last.created_at)}</span>
+          </span>
+          {deltaPrev !== null && (
+            <span className={deltaClass(deltaPrev)}>
+              {deltaPrev === 0 ? t('log.noChange') : fmtDelta(deltaPrev)} {t('log.vsPrev')}
+            </span>
+          )}
+          {deltaMonth !== null && (
+            <span className={deltaClass(deltaMonth)}>
+              {deltaMonth === 0 ? t('log.noChange') : fmtDelta(deltaMonth)} {t('log.thisMonth')}
+            </span>
+          )}
+          {log?.pr && (
+            <span className="text-muted">
+              {t('log.pr')}: <span className="text-ink font-semibold">{fmtKg(log.pr.weight_kg)}</span>
+            </span>
+          )}
+        </p>
+      ) : (
+        <p className="text-sm text-muted mb-3">{t('log.noneYet')}</p>
+      )}
+
+      {/* Registro rápido */}
+      <form onSubmit={submit} className="flex flex-wrap items-end gap-2">
+        <div>
+          <label className="block text-[11px] text-muted mb-0.5">kg</label>
+          <input type="number" step="0.5" min="0" required value={weight}
+            onChange={(e) => { touched.current = true; setWeight(e.target.value); }} className={inputClass} />
+        </div>
+        <div>
+          <label className="block text-[11px] text-muted mb-0.5">{t('routine.reps').toLowerCase()}</label>
+          <input type="number" min="1" required value={reps}
+            onChange={(e) => { touched.current = true; setReps(e.target.value); }} className={inputClass} />
+        </div>
+        <div>
+          <label className="block text-[11px] text-muted mb-0.5">{t('routine.sets').toLowerCase()}</label>
+          <input type="number" min="1" required value={sets}
+            onChange={(e) => { touched.current = true; setSets(e.target.value); }} className={inputClass} />
+        </div>
+        <button
+          type="submit"
+          disabled={state === 'busy'}
+          className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+            state === 'done'
+              ? 'bg-accent/10 text-accent'
+              : 'bg-accent text-on-accent hover:bg-accent-hi disabled:opacity-50'
+          }`}
+        >
+          {state === 'busy' ? t('log.registering') : state === 'done' ? t('log.registered') : t('log.register')}
+        </button>
+        {state === 'error' && <span className="text-danger text-sm">{t('log.error')}</span>}
+      </form>
+    </div>
+  );
+};
+
+const ExerciseRow = ({ item, t, canLog, log, onLogged }) => {
   const [open, setOpen] = useState(false);
   const ex = item.Exercise || {};
   const image = ex.ExerciseImages?.[0]?.image_url;
@@ -72,7 +208,11 @@ const ExerciseRow = ({ item, t }) => {
               {item.weight_kg} kg
             </span>
           </div>
-          <p className="text-sm text-muted leading-relaxed">
+
+          {/* Track your progress: solo con sesión iniciada */}
+          {canLog && <ProgressBlock item={item} log={log} onLogged={onLogged} />}
+
+          <p className="text-sm text-muted leading-relaxed mt-4">
             {description || t('routineDetail.noDescription')}
           </p>
         </div>
@@ -93,6 +233,8 @@ const RoutineDetail = () => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [copyState, setCopyState] = useState('idle');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  // Resumen de progreso por exercise_id: { last, prev, monthAgo, pr }
+  const [logSummary, setLogSummary] = useState({});
 
   const userStr = localStorage.getItem('user');
   const currentUser = userStr ? JSON.parse(userStr) : {};
@@ -114,9 +256,30 @@ const RoutineDetail = () => {
       routinesAPI.getFavorites(currentUser.username)
         .then((res) => setIsFavorited((res.data || []).some((r) => r.id === parseInt(id))))
         .catch(() => {});
+      logsAPI.getSummary(id)
+        .then((res) => setLogSummary(res.data || {}))
+        .catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // Tras registrar: el último pasa a "anterior", recalculamos el PR localmente
+  const handleLogged = (exerciseId, newLog) => {
+    setLogSummary((prev) => {
+      const cur = prev[exerciseId] || {};
+      const entry = {
+        weight_kg: parseFloat(newLog.weight_kg),
+        reps: newLog.reps,
+        sets: newLog.sets,
+        created_at: newLog.created_at,
+      };
+      const pr = cur.pr && parseFloat(cur.pr.weight_kg) >= entry.weight_kg ? cur.pr : entry;
+      return {
+        ...prev,
+        [exerciseId]: { last: entry, prev: cur.last || null, monthAgo: cur.monthAgo || null, pr },
+      };
+    });
+  };
 
   const handleFavoriteToggle = async () => {
     const next = !isFavorited;
@@ -335,7 +498,14 @@ const RoutineDetail = () => {
               </h2>
               <div className="space-y-3">
                 {g.items.map((item) => (
-                  <ExerciseRow key={item.id} item={item} t={t} />
+                  <ExerciseRow
+                    key={item.id}
+                    item={item}
+                    t={t}
+                    canLog={isLoggedIn}
+                    log={logSummary[item.exercise_id]}
+                    onLogged={handleLogged}
+                  />
                 ))}
               </div>
             </div>
