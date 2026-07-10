@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { Op } = require("sequelize");
 const { authMiddleware } = require('../middleware/authMiddleware');
-const { ExerciseLog, Exercise, Routine, RoutineExercise } = require("../models/index");
+const { ExerciseLog, Exercise, ExerciseImage, Routine, RoutineExercise } = require("../models/index");
 
 // POST /api/logs — registrar lo levantado en un ejercicio
 router.post("/", authMiddleware, async (req, res) => {
@@ -19,6 +19,12 @@ router.post("/", authMiddleware, async (req, res) => {
     const exercise = await Exercise.findByPk(exercise_id);
     if (!exercise) return res.status(404).json({ message: "Ejercicio no encontrado." });
 
+    // ¿Récord personal? Solo celebra si SUPERA un máximo previo
+    // (el primer registro de un ejercicio no cuenta como PR).
+    const prevMax = await ExerciseLog.max('weight_kg', {
+      where: { user_id: req.user.id, exercise_id },
+    });
+
     const log = await ExerciseLog.create({
       user_id: req.user.id,
       exercise_id,
@@ -28,7 +34,8 @@ router.post("/", authMiddleware, async (req, res) => {
       sets: setsN,
     });
 
-    res.status(201).json(log);
+    const isNewPr = prevMax !== null && weight > parseFloat(prevMax);
+    res.status(201).json({ ...log.toJSON(), isNewPr });
   } catch (error) {
     console.error("Error al registrar el log:", error);
     res.status(500).json({ message: "Error al registrar." });
@@ -93,6 +100,57 @@ router.get("/summary", authMiddleware, async (req, res) => {
     res.json(summary);
   } catch (error) {
     console.error("Error en el resumen de logs:", error);
+    res.status(500).json({ message: "Error al obtener el progreso." });
+  }
+});
+
+// GET /api/logs/overview — todos los ejercicios que el usuario registró alguna
+// vez, con resumen (último/anterior/mes/PR) y la serie para el sparkline.
+router.get("/overview", authMiddleware, async (req, res) => {
+  try {
+    const logs = await ExerciseLog.findAll({
+      where: { user_id: req.user.id },
+      order: [['created_at', 'DESC']],
+      limit: 2000,
+    });
+    if (!logs.length) return res.json([]);
+
+    const byExercise = {};
+    for (const log of logs) {
+      (byExercise[log.exercise_id] = byExercise[log.exercise_id] || []).push(log);
+    }
+
+    const exercises = await Exercise.findAll({
+      where: { id: { [Op.in]: Object.keys(byExercise) } },
+      include: [ExerciseImage],
+    });
+    const exMap = new Map(exercises.map(e => [e.id, e]));
+
+    const overview = Object.entries(byExercise).map(([id, exLogs]) => {
+      const ex = exMap.get(parseInt(id));
+      // Serie cronológica (viejo → nuevo) para el sparkline, últimos 12 registros
+      const series = exLogs.slice(0, 12).reverse().map(l => ({
+        w: parseFloat(l.weight_kg),
+        t: l.created_at,
+      }));
+      return {
+        exercise: ex ? {
+          id: ex.id,
+          name: ex.name,
+          category: ex.category,
+          image: ex.ExerciseImages?.[0]?.image_url || null,
+        } : { id: parseInt(id), name: '?', category: null, image: null },
+        ...summarize(exLogs),
+        series,
+        total_logs: exLogs.length,
+      };
+    });
+
+    // Más recientemente entrenado primero
+    overview.sort((a, b) => new Date(b.last.created_at) - new Date(a.last.created_at));
+    res.json(overview);
+  } catch (error) {
+    console.error("Error en el overview de progreso:", error);
     res.status(500).json({ message: "Error al obtener el progreso." });
   }
 });

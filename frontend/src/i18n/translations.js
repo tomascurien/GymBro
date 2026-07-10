@@ -302,6 +302,22 @@ const es = {
   'log.pr': 'PR',
   'log.noneYet': 'Registrá tu primer peso y empezá a trackear tu progreso.',
   'log.noChange': 'igual',
+  'log.newPr': '¡Nuevo récord personal!',
+  'log.sharePr': 'Compartirlo',
+  'log.prPostText': 'Nuevo récord personal: {exercise} — {kg} kg × {reps} #PR',
+
+  // Página Progreso
+  'nav.progress': 'Progreso',
+  'progress.title': 'Tu progreso',
+  'progress.subtitle': 'Cada ejercicio que registraste, con su tendencia y tus récords. Solo vos ves esto.',
+  'progress.loginText': 'Iniciá sesión para trackear tus pesos y tus récords personales.',
+  'progress.emptyTitle': 'Todavía no registraste nada',
+  'progress.emptyText': 'Entrá a una rutina, expandí un ejercicio y registrá tu primer peso.',
+  'progress.goRoutines': 'Ir a mis rutinas',
+  'progress.records': 'Récords personales',
+  'progress.viewAll': 'Ver todo tu progreso',
+  'progress.logCount': '{n} registros',
+  'progress.logOne': '1 registro',
 
   // Grupos musculares (IDs de Wger)
   'muscle.10': 'Abdominales',
@@ -617,6 +633,22 @@ const en = {
   'log.pr': 'PR',
   'log.noneYet': 'Log your first weight and start tracking your progress.',
   'log.noChange': 'no change',
+  'log.newPr': 'New personal record!',
+  'log.sharePr': 'Share it',
+  'log.prPostText': 'New personal record: {exercise} — {kg} kg × {reps} #PR',
+
+  // Progress page
+  'nav.progress': 'Progress',
+  'progress.title': 'Your progress',
+  'progress.subtitle': 'Every exercise you logged, with its trend and your records. Only you can see this.',
+  'progress.loginText': 'Log in to track your weights and personal records.',
+  'progress.emptyTitle': "You haven't logged anything yet",
+  'progress.emptyText': 'Open a routine, expand an exercise and log your first weight.',
+  'progress.goRoutines': 'Go to my routines',
+  'progress.records': 'Personal records',
+  'progress.viewAll': 'View all your progress',
+  'progress.logCount': '{n} logs',
+  'progress.logOne': '1 log',
 
   // Muscle groups (Wger IDs)
   'muscle.10': 'Abs',

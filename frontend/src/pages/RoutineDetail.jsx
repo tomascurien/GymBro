@@ -7,6 +7,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { routinesAPI, logsAPI } from '../services/api';
 import { useI18n } from '../i18n/I18nContext';
 import { AlertCircleIcon } from '../components/Icons';
+import CreatePostModal from '../components/CreatePostModal';
 
 // Las descripciones de Wger vienen con HTML: las pasamos a texto plano
 const stripHtml = (html) =>
@@ -34,8 +35,9 @@ const fmtKg = (w) => {
 };
 
 // Bloque "Tu progreso": línea de progreso + registro rápido (el hábito de 2 segundos)
-const ProgressBlock = ({ item, log, onLogged }) => {
+const ProgressBlock = ({ item, log, onLogged, onSharePr }) => {
   const { t, locale } = useI18n();
+  const [newPr, setNewPr] = useState(null); // último log que rompió el récord
   const [weight, setWeight] = useState(log?.last?.weight_kg ?? item.weight_kg ?? '');
   const [reps, setReps] = useState(log?.last?.reps ?? item.reps ?? '');
   const [sets, setSets] = useState(log?.last?.sets ?? item.RoutineSets?.length ?? 3);
@@ -74,6 +76,7 @@ const ProgressBlock = ({ item, log, onLogged }) => {
         sets,
       });
       onLogged(item.exercise_id, res.data);
+      if (res.data.isNewPr) setNewPr(res.data);
       setState('done');
       setTimeout(() => setState('idle'), 2500);
     } catch (err) {
@@ -153,11 +156,34 @@ const ProgressBlock = ({ item, log, onLogged }) => {
         </button>
         {state === 'error' && <span className="text-danger text-sm">{t('log.error')}</span>}
       </form>
+
+      {/* Celebración de récord: puerta de entrada al post con #PR */}
+      {newPr && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 bg-accent/10 border border-accent/40 rounded-xl px-3.5 py-2.5">
+          <p className="text-sm font-semibold text-accent">
+            {t('log.newPr')} {fmtKg(newPr.weight_kg)} × {newPr.reps}
+          </p>
+          <button
+            type="button"
+            onClick={() => onSharePr(item.Exercise?.name, newPr)}
+            className="px-4 py-1.5 rounded-full text-sm font-semibold bg-accent text-on-accent hover:bg-accent-hi transition-colors"
+          >
+            {t('log.sharePr')}
+          </button>
+        </div>
+      )}
+
+      <Link
+        to="/progress"
+        className="inline-block mt-3 text-sm text-accent hover:underline"
+      >
+        {t('progress.viewAll')} →
+      </Link>
     </div>
   );
 };
 
-const ExerciseRow = ({ item, t, canLog, log, onLogged }) => {
+const ExerciseRow = ({ item, t, canLog, log, onLogged, onSharePr }) => {
   const [open, setOpen] = useState(false);
   const ex = item.Exercise || {};
   const image = ex.ExerciseImages?.[0]?.image_url;
@@ -210,7 +236,7 @@ const ExerciseRow = ({ item, t, canLog, log, onLogged }) => {
           </div>
 
           {/* Track your progress: solo con sesión iniciada */}
-          {canLog && <ProgressBlock item={item} log={log} onLogged={onLogged} />}
+          {canLog && <ProgressBlock item={item} log={log} onLogged={onLogged} onSharePr={onSharePr} />}
 
           <p className="text-sm text-muted leading-relaxed mt-4">
             {description || t('routineDetail.noDescription')}
@@ -235,6 +261,8 @@ const RoutineDetail = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // Resumen de progreso por exercise_id: { last, prev, monthAgo, pr }
   const [logSummary, setLogSummary] = useState({});
+  // Texto prefillado del post de PR (abre el composer al compartir un récord)
+  const [prShareText, setPrShareText] = useState(null);
 
   const userStr = localStorage.getItem('user');
   const currentUser = userStr ? JSON.parse(userStr) : {};
@@ -505,6 +533,13 @@ const RoutineDetail = () => {
                     canLog={isLoggedIn}
                     log={logSummary[item.exercise_id]}
                     onLogged={handleLogged}
+                    onSharePr={(exerciseName, prLog) =>
+                      setPrShareText(t('log.prPostText', {
+                        exercise: exerciseName || '',
+                        kg: fmtKg(prLog.weight_kg).replace(' kg', ''),
+                        reps: prLog.reps,
+                      }))
+                    }
                   />
                 ))}
               </div>
@@ -512,6 +547,15 @@ const RoutineDetail = () => {
           ))}
         </div>
       </div>
+
+      {/* Composer prefillado para compartir el PR */}
+      {prShareText && (
+        <CreatePostModal
+          initialText={prShareText}
+          onClose={() => setPrShareText(null)}
+          onPostCreated={() => setPrShareText(null)}
+        />
+      )}
 
       {/* Confirmación de borrado */}
       {showDeleteConfirm && (

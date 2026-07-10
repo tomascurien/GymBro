@@ -29,6 +29,12 @@ const HeartIcon = ({ active }) => (
   </svg>
 );
 
+const TrendIcon = ({ active }) => (
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.6 : 2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+  </svg>
+);
+
 const BellIcon = ({ active }) => (
   <svg className="w-6 h-6" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
@@ -73,6 +79,7 @@ const Sidebar = () => {
     { to: '/routines', label: t('nav.routines'), Icon: DumbbellIcon },
     { to: '/saved', label: t('nav.saved'), Icon: BookmarkIcon },
     { to: '/likes', label: t('nav.likes'), Icon: HeartIcon },
+    { to: '/progress', label: t('nav.progress'), Icon: TrendIcon },
     { to: '/notifications', label: t('nav.notifications'), Icon: BellIcon, hasBadge: true },
   ];
 

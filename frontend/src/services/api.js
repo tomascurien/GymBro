@@ -89,6 +89,7 @@ export const logsAPI = {
   createLog: (data) => api.post('/logs', data),
   getSummary: (routineId) => api.get('/logs/summary', { params: { routine_id: routineId } }),
   getExerciseHistory: (exerciseId) => api.get(`/logs/exercise/${exerciseId}`),
+  getOverview: () => api.get('/logs/overview'),
 };
 
 // Users endpoints

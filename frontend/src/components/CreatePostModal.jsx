@@ -3,9 +3,9 @@ import { postsAPI } from '../services/api';
 import { useI18n } from '../i18n/I18nContext';
 import { TOPICS } from '../constants/topics';
 
-const CreatePostModal = ({ onClose, onPostCreated }) => {
+const CreatePostModal = ({ onClose, onPostCreated, initialText = '' }) => {
   const { t } = useI18n();
-  const [text, setText] = useState('');
+  const [text, setText] = useState(initialText);
   const [topic, setTopic] = useState(null);
   const [mediaFile, setMediaFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
