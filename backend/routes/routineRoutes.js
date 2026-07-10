@@ -21,21 +21,6 @@ const SOURCE_INCLUDE = {
   include: [{ model: User, attributes: ['username', 'name', 'surname'] }],
 };
 
-// Agrega copies_count (cuántas copias tiene cada rutina) a una lista de rutinas
-const annotateCopies = async (routines) => {
-  const plain = routines.map(r => (r.get ? r.get({ plain: true }) : r));
-  const ids = plain.map(r => r.id);
-  if (!ids.length) return plain;
-  const counts = await Routine.findAll({
-    where: { source_routine_id: { [Op.in]: ids } },
-    attributes: ['source_routine_id', [sequelize.fn('COUNT', sequelize.col('id')), 'n']],
-    group: ['source_routine_id'],
-    raw: true,
-  });
-  const map = new Map(counts.map(c => [c.source_routine_id, parseInt(c.n)]));
-  return plain.map(r => ({ ...r, copies_count: map.get(r.id) || 0 }));
-};
-
 // POST /api/routines
 router.post("/", authMiddleware, async (req, res) => {
 
@@ -104,67 +89,6 @@ router.post("/", authMiddleware, async (req, res) => {
   }
 });
 
-// POST /api/routines/:id/copy
-// Copia la rutina de otro usuario a "mis rutinas", con atribución al original.
-router.post("/:id/copy", authMiddleware, async (req, res) => {
-  const t = await sequelize.transaction();
-  try {
-    const original = await Routine.findByPk(req.params.id, {
-      include: [{ model: RoutineExercise, include: [RoutineSet] }],
-    });
-    if (!original) {
-      await t.rollback();
-      return res.status(404).json({ message: "Rutina no encontrada." });
-    }
-    if (original.user_id === req.user.id) {
-      await t.rollback();
-      return res.status(400).json({ message: "Esta rutina ya es tuya." });
-    }
-
-    const copy = await Routine.create({
-      user_id: req.user.id,
-      title: original.title,
-      objective: original.objective,
-      days_per_week: original.days_per_week,
-      // Atribuir a la rutina raíz: copiar una copia sigue apuntando al original
-      source_routine_id: original.source_routine_id || original.id,
-    }, { transaction: t });
-
-    for (const ex of original.RoutineExercises) {
-      const newEx = await RoutineExercise.create({
-        routine_id: copy.id,
-        exercise_id: ex.exercise_id,
-        index: ex.index,
-        day: ex.day || 1,
-        weight_kg: ex.weight_kg,
-        reps: ex.reps,
-      }, { transaction: t });
-      await RoutineSet.bulkCreate(
-        ex.RoutineSets.map(s => ({
-          routine_exercise_id: newEx.id,
-          index: s.index,
-          type: s.type,
-        })),
-        { transaction: t }
-      );
-    }
-
-    await t.commit();
-
-    const finalRoutine = await Routine.findByPk(copy.id, {
-      include: [
-        { model: RoutineExercise, include: [RoutineSet, { model: Exercise, include: [ExerciseImage] }] },
-        SOURCE_INCLUDE,
-      ],
-    });
-    res.status(201).json(finalRoutine);
-  } catch (error) {
-    await t.rollback();
-    console.error("Error al copiar la rutina:", error);
-    res.status(500).json({ message: "Error al copiar la rutina." });
-  }
-});
-
 // GET /api/routines/user/:username/favorites
 router.get("/user/:username/favorites", async (req, res) => {
   try {
@@ -191,7 +115,7 @@ router.get("/user/:username/favorites", async (req, res) => {
       order: [['createdAt', 'DESC']]
     });
 
-    res.json(await annotateCopies(favoriteRoutines));
+    res.json(favoriteRoutines);
   } catch (error) {
     console.error("Error al obtener rutinas favoritas:", error);
     res.status(500).json({ message: "Error al obtener las rutinas favoritas"});
@@ -232,7 +156,7 @@ router.get("/user/:username", async (req, res) => {
             ]
         });
 
-        res.json(await annotateCopies(routines));
+        res.json(routines);
 
     } catch (error) {
         console.error("Error al obtener rutinas:", error);
@@ -261,8 +185,7 @@ router.get("/:id", async (req, res) => {
     });
     if (!routine) return res.status(404).json({ message: "Rutina no encontrada." });
 
-    const [annotated] = await annotateCopies([routine]);
-    res.json(annotated);
+    res.json(routine);
   } catch (error) {
     console.error("Error al obtener la rutina:", error);
     res.status(500).json({ message: "Error al obtener la rutina." });

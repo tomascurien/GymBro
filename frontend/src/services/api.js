@@ -81,7 +81,6 @@ export const routinesAPI = {
   getFavorites: (username) => api.get(`/routines/user/${username}/favorites`),
   addFavorite: (routineId) => api.post(`/routines/${routineId}/favorite`),
   removeFavorite: (routineId) => api.delete(`/routines/${routineId}/favorite`),
-  copyRoutine: (routineId) => api.post(`/routines/${routineId}/copy`),
 };
 
 // Registros de progreso (Track your progress)
@@ -119,6 +118,7 @@ export const usersAPI = {
     }
   },
   updateProfile: (profileData) => api.put(`/users/profile`, profileData),
+  getBadges: (username) => api.get(`/users/${username}/badges`),
   // No hay search por ahora
 };
 

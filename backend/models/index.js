@@ -13,6 +13,7 @@ const Comment = require('./Comment');
 const Notification = require('./Notification');
 const CommentLike = require('./CommentLike');
 const ExerciseLog = require('./ExerciseLog');
+const UserBadge = require('./UserBadge');
 
 // const Subscription = require('./Subscription');
 // const Payment = require('./models/Payment');
@@ -133,5 +134,6 @@ module.exports = {
   Comment,
   Notification,
   CommentLike,
-  ExerciseLog
+  ExerciseLog,
+  UserBadge
 };

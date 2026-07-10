@@ -6,6 +6,7 @@ const { authMiddleware, SECRET_KEY } = require('../middleware/authMiddleware');
 const { User, Follower, Post } = require("../models/index");
 const { upload, uploadFileToSupabase } = require('../services/uploadService');
 const { TOPICS } = require('../constants/topics');
+const { getBadges } = require('../services/badgeService');
 
 router.post('/register', userController.register);
 router.post('/login', userController.login);
@@ -128,6 +129,19 @@ router.delete('/:id/follow', authMiddleware, async (req, res) => {
         console.error('Error al dejar de seguir:', error);
         res.status(500).json({ message: 'Error al dejar de seguir.', isFollowing: false });
     }
+});
+
+// GET /api/users/:username/badges — insignias del usuario (público; los
+// niveles nuevos se persisten de forma lazy al consultarse)
+router.get("/:username/badges", async (req, res) => {
+  try {
+    const user = await User.findOne({ where: { username: req.params.username }, attributes: ['id'] });
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado." });
+    res.json(await getBadges(user.id));
+  } catch (error) {
+    console.error("Error al obtener insignias:", error);
+    res.status(500).json({ message: "Error al obtener las insignias." });
+  }
 });
 
 router.get("/profile/:username", async (req, res) => {

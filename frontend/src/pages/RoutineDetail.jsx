@@ -257,7 +257,6 @@ const RoutineDetail = () => {
   const [notFound, setNotFound] = useState(false);
   const [activeDay, setActiveDay] = useState(null);
   const [isFavorited, setIsFavorited] = useState(false);
-  const [copyState, setCopyState] = useState('idle');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // Resumen de progreso por exercise_id: { last, prev, monthAgo, pr }
   const [logSummary, setLogSummary] = useState({});
@@ -317,18 +316,6 @@ const RoutineDetail = () => {
       else await routinesAPI.removeFavorite(routine.id);
     } catch (err) {
       setIsFavorited(!next);
-    }
-  };
-
-  const handleCopy = async () => {
-    if (copyState !== 'idle') return;
-    setCopyState('busy');
-    try {
-      await routinesAPI.copyRoutine(routine.id);
-      setCopyState('done');
-    } catch (err) {
-      console.error('Error al copiar rutina:', err);
-      setCopyState('idle');
     }
   };
 
@@ -406,29 +393,16 @@ const RoutineDetail = () => {
             <h1 className="text-2xl md:text-3xl font-display font-bold text-ink">{routine.title}</h1>
             <div className="flex items-center gap-2 shrink-0">
               {isLoggedIn && !isOwner && (
-                <>
-                  <button
-                    onClick={handleCopy}
-                    disabled={copyState === 'busy'}
-                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
-                      copyState === 'done'
-                        ? 'bg-accent/10 text-accent'
-                        : 'bg-accent text-on-accent hover:bg-accent-hi'
-                    }`}
-                  >
-                    {copyState === 'done' ? t('routines.copied') : t('routines.copy')}
-                  </button>
-                  <button
-                    onClick={handleFavoriteToggle}
-                    className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
-                      isFavorited
-                        ? 'border-accent text-accent bg-accent/10'
-                        : 'border-edge text-muted hover:text-ink'
-                    }`}
-                  >
-                    {isFavorited ? t('routineDetail.saved') : t('routineDetail.save')}
-                  </button>
-                </>
+                <button
+                  onClick={handleFavoriteToggle}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+                    isFavorited
+                      ? 'bg-accent/10 text-accent border border-accent'
+                      : 'bg-accent text-on-accent hover:bg-accent-hi'
+                  }`}
+                >
+                  {isFavorited ? t('routineDetail.saved') : t('routineDetail.save')}
+                </button>
               )}
               {(isOwner || isAdmin) && (
                 <button
@@ -482,11 +456,6 @@ const RoutineDetail = () => {
                 ? t('routineDetail.exerciseOne')
                 : t('routineDetail.exerciseCount', { n: exercises.length })}
             </span>
-            {routine.copies_count > 0 && (
-              <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-raised text-muted border border-edge">
-                {routine.copies_count === 1 ? t('routines.copyOne') : t('routines.copies', { n: routine.copies_count })}
-              </span>
-            )}
           </div>
         </div>
 

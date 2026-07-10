@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { routinesAPI } from '../services/api';
 import { useI18n } from '../i18n/I18nContext';
 import { DumbbellIcon } from './Icons';
 
@@ -28,48 +27,6 @@ const BookmarkIcon = ({ isFavorited, isLoggedIn, ...props }) => (
   </button>
 );
 
-// Botón "copiar rutina" (para rutinas ajenas): la clona a mis rutinas con atribución
-const CopyButton = ({ routineId }) => {
-  const { t } = useI18n();
-  const [state, setState] = useState('idle'); // idle | busy | done | error
-
-  const handleCopy = async () => {
-    if (state === 'busy' || state === 'done') return;
-    setState('busy');
-    try {
-      await routinesAPI.copyRoutine(routineId);
-      setState('done');
-    } catch (err) {
-      console.error('Error al copiar rutina:', err);
-      setState('error');
-      setTimeout(() => setState('idle'), 3000);
-    }
-  };
-
-  return (
-    <button
-      onClick={handleCopy}
-      disabled={state === 'busy'}
-      title={t('routines.copy')}
-      className={`p-1.5 rounded-lg transition-colors ${
-        state === 'done'
-          ? 'text-accent'
-          : 'text-muted hover:text-accent hover:bg-accent/10'
-      }`}
-    >
-      {state === 'done' ? (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-        </svg>
-      ) : (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
-        </svg>
-      )}
-    </button>
-  );
-};
-
 // Tarjeta compacta de rutina: resumen + acciones; el contenido completo
 // vive en la página de detalle (/routines/:id)
 const RoutineCard = ({ routine, onRoutineDelete, onFavoriteToggle, myFavoriteIds, isLoggedIn }) => {
@@ -79,8 +36,6 @@ const RoutineCard = ({ routine, onRoutineDelete, onFavoriteToggle, myFavoriteIds
   const currentUser = userStr ? JSON.parse(userStr) : {};
   const isMyRoutine = routine.user_id === currentUser.id;
   const isAdmin = currentUser.role === 'admin';
-
-  const copies = routine.copies_count || 0;
   const sourceUser = routine.SourceRoutine?.User;
   const author = routine.User;
   const exercises = routine.RoutineExercises || [];
@@ -166,11 +121,6 @@ const RoutineCard = ({ routine, onRoutineDelete, onFavoriteToggle, myFavoriteIds
                 ? t('routineDetail.exerciseOne')
                 : t('routineDetail.exerciseCount', { n: exercises.length })}
             </span>
-            {copies > 0 && (
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-raised text-muted border border-edge">
-                {copies === 1 ? t('routines.copyOne') : t('routines.copies', { n: copies })}
-              </span>
-            )}
           </div>
 
           {/* Grupos musculares que toca */}
@@ -198,7 +148,6 @@ const RoutineCard = ({ routine, onRoutineDelete, onFavoriteToggle, myFavoriteIds
             </button>
           ) : (
             <>
-              {isLoggedIn && <CopyButton routineId={routine.id} />}
               <BookmarkIcon
                 isLoggedIn={isLoggedIn}
                 isFavorited={myFavoriteIds.has(routine.id)}

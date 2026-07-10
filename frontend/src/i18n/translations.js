@@ -38,11 +38,6 @@ const es = {
   'routines.loginTitle': 'Tus rutinas viven acá',
   'routines.loginText': 'Iniciá sesión para crear rutinas, guardarlas y copiarte las de otros.',
   'routines.basedOn': 'Basada en la rutina de',
-  'routines.copies': '{n} copias',
-  'routines.copyOne': '1 copia',
-  'routines.copy': 'Copiar rutina',
-  'routines.copied': 'Rutina copiada a tus rutinas ✓',
-  'routines.copyError': 'No se pudo copiar la rutina.',
 
   // Guardadas
   'saved.title': 'Rutinas guardadas',
@@ -325,6 +320,24 @@ const es = {
   'progress.rangeDelta': 'en el período',
   'progress.history': 'Historial',
 
+  // Insignias
+  'badges.title': 'Insignias',
+  'badges.viewAll': 'Ver todas',
+  'badges.tierOf': 'Nivel {tier} de {total}',
+  'badges.locked': 'Bloqueada',
+  'badge.regularity': 'Regularidad',
+  'badge.regularity.desc': 'Semanas seguidas entrenando',
+  'badge.regularity.value': '{n} semanas',
+  'badge.prs': 'Récords',
+  'badge.prs.desc': 'Récords personales logrados',
+  'badge.prs.value': '{n} PRs',
+  'badge.progress': 'Progreso',
+  'badge.progress.desc': 'Mejora máxima en un ejercicio',
+  'badge.progress.value': '+{n}%',
+  'badge.creator': 'Creador',
+  'badge.creator.desc': 'Veces que guardaron tus rutinas',
+  'badge.creator.value': '{n} guardadas',
+
   // Grupos musculares (IDs de Wger)
   'muscle.10': 'Abdominales',
   'muscle.8': 'Brazos',
@@ -375,11 +388,6 @@ const en = {
   'routines.loginTitle': 'Your routines live here',
   'routines.loginText': 'Log in to create routines, save them and copy from others.',
   'routines.basedOn': 'Based on a routine by',
-  'routines.copies': '{n} copies',
-  'routines.copyOne': '1 copy',
-  'routines.copy': 'Copy routine',
-  'routines.copied': 'Routine copied to your routines ✓',
-  'routines.copyError': 'Could not copy the routine.',
 
   // Saved
   'saved.title': 'Saved routines',
@@ -661,6 +669,24 @@ const en = {
   'progress.noLogsRange': 'No logs in this period.',
   'progress.rangeDelta': 'in this period',
   'progress.history': 'History',
+
+  // Badges
+  'badges.title': 'Badges',
+  'badges.viewAll': 'View all',
+  'badges.tierOf': 'Tier {tier} of {total}',
+  'badges.locked': 'Locked',
+  'badge.regularity': 'Consistency',
+  'badge.regularity.desc': 'Consecutive weeks training',
+  'badge.regularity.value': '{n} weeks',
+  'badge.prs': 'Records',
+  'badge.prs.desc': 'Personal records achieved',
+  'badge.prs.value': '{n} PRs',
+  'badge.progress': 'Progress',
+  'badge.progress.desc': 'Best improvement on an exercise',
+  'badge.progress.value': '+{n}%',
+  'badge.creator': 'Creator',
+  'badge.creator.desc': 'Times your routines were saved',
+  'badge.creator.value': '{n} saves',
 
   // Muscle groups (Wger IDs)
   'muscle.10': 'Abs',
