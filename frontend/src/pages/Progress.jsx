@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { logsAPI } from '../services/api';
 import { useI18n } from '../i18n/I18nContext';
 import { DumbbellIcon } from '../components/Icons';
+import ProgressDetailModal from '../components/ProgressDetailModal';
 
 const fmtKg = (w) => {
   const n = parseFloat(w);
@@ -76,6 +77,7 @@ const Progress = () => {
   const { t, locale } = useI18n();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [detail, setDetail] = useState(null); // ejercicio abierto en el modal
 
   const isLoggedIn = !!localStorage.getItem('token');
 
@@ -124,6 +126,21 @@ const Progress = () => {
     .filter((it) => it.pr)
     .sort((a, b) => b.pr.weight_kg - a.pr.weight_kg)
     .slice(0, 6);
+
+  // Secciones por grupo muscular, ordenadas por actividad más reciente.
+  // (items ya viene ordenado por último registro desc, así que el orden
+  // interno de cada grupo se conserva.)
+  const groups = [];
+  const groupMap = new Map();
+  for (const it of items) {
+    const cat = it.exercise.category || 0;
+    if (!groupMap.has(cat)) {
+      const g = { cat, items: [] };
+      groupMap.set(cat, g);
+      groups.push(g);
+    }
+    groupMap.get(cat).items.push(it);
+  }
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -174,53 +191,76 @@ const Progress = () => {
               </div>
             )}
 
-            {/* Ejercicios registrados */}
-            <div className="space-y-3">
-              {items.map((it) => {
-                const trendDelta = it.monthAgo
-                  ? it.last.weight_kg - it.monthAgo.weight_kg
-                  : it.prev
-                    ? it.last.weight_kg - it.prev.weight_kg
-                    : null;
-                return (
-                  <div key={it.exercise.id} className="bg-surface border border-edge rounded-2xl p-4 flex items-center gap-4">
-                    <img
-                      src={it.exercise.image || 'https://placehold.co/64x64/e2e8f0/64748b?text=%20'}
-                      alt=""
-                      className="w-14 h-14 object-cover rounded-xl bg-raised shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-display font-semibold text-ink truncate">{it.exercise.name}</p>
-                        <TrendArrow delta={trendDelta} />
-                      </div>
-                      <p className="text-sm text-muted mt-0.5 flex flex-wrap gap-x-2">
-                        <span>
-                          <span className="font-semibold text-ink">{fmtKg(it.last.weight_kg)} × {it.last.reps}</span>{' '}
-                          · {relTime(it.last.created_at)}
-                        </span>
-                        {it.monthAgo && (
-                          <span className={trendDelta > 0 ? 'text-accent font-semibold' : ''}>
-                            {trendDelta === 0 ? t('log.noChange') : fmtDelta(trendDelta)} {t('log.thisMonth')}
-                          </span>
-                        )}
-                        <span>
-                          {t('log.pr')}: <span className="text-ink font-semibold">{fmtKg(it.pr.weight_kg)}</span>
-                        </span>
-                      </p>
-                      <p className="text-xs text-muted mt-0.5">
-                        {it.total_logs === 1 ? t('progress.logOne') : t('progress.logCount', { n: it.total_logs })}
-                        {it.exercise.category && <> · {t(`muscle.${it.exercise.category}`)}</>}
-                      </p>
-                    </div>
-                    <Sparkline series={it.series} />
+            {/* Ejercicios por grupo muscular (grupo más activo primero) */}
+            <div className="space-y-8">
+              {groups.map((g) => (
+                <div key={g.cat}>
+                  <h2 className="flex items-center gap-2.5 mb-3">
+                    <span className="w-1 h-5 rounded-full bg-accent"></span>
+                    <span className="font-display font-bold text-ink uppercase tracking-wide text-sm">
+                      {g.cat ? t(`muscle.${g.cat}`) : '—'}
+                    </span>
+                    <span className="text-xs text-muted">
+                      {g.items.length === 1 ? '1' : g.items.length}
+                    </span>
+                  </h2>
+                  <div className="space-y-3">
+                    {g.items.map((it) => {
+                      const trendDelta = it.monthAgo
+                        ? it.last.weight_kg - it.monthAgo.weight_kg
+                        : it.prev
+                          ? it.last.weight_kg - it.prev.weight_kg
+                          : null;
+                      return (
+                        <div
+                          key={it.exercise.id}
+                          onClick={() => setDetail(it.exercise)}
+                          className="bg-surface border border-edge rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:border-accent/50 transition-colors"
+                        >
+                          <img
+                            src={it.exercise.image || 'https://placehold.co/64x64/e2e8f0/64748b?text=%20'}
+                            alt=""
+                            className="w-14 h-14 object-cover rounded-xl bg-raised shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-display font-semibold text-ink truncate">{it.exercise.name}</p>
+                              <TrendArrow delta={trendDelta} />
+                            </div>
+                            <p className="text-sm text-muted mt-0.5 flex flex-wrap gap-x-2">
+                              <span>
+                                <span className="font-semibold text-ink">{fmtKg(it.last.weight_kg)} × {it.last.reps}</span>{' '}
+                                · {relTime(it.last.created_at)}
+                              </span>
+                              {it.monthAgo && (
+                                <span className={trendDelta > 0 ? 'text-accent font-semibold' : ''}>
+                                  {trendDelta === 0 ? t('log.noChange') : fmtDelta(trendDelta)} {t('log.thisMonth')}
+                                </span>
+                              )}
+                              <span>
+                                {t('log.pr')}: <span className="text-ink font-semibold">{fmtKg(it.pr.weight_kg)}</span>
+                              </span>
+                            </p>
+                            <p className="text-xs text-muted mt-0.5">
+                              {it.total_logs === 1 ? t('progress.logOne') : t('progress.logCount', { n: it.total_logs })}
+                            </p>
+                          </div>
+                          <Sparkline series={it.series} />
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </>
         )}
       </div>
+
+      {/* Modal de detalle de progreso */}
+      {detail && (
+        <ProgressDetailModal exercise={detail} onClose={() => setDetail(null)} />
+      )}
     </div>
   );
 };

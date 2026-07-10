@@ -318,6 +318,12 @@ const es = {
   'progress.viewAll': 'Ver todo tu progreso',
   'progress.logCount': '{n} registros',
   'progress.logOne': '1 registro',
+  'progress.range1m': '1 mes',
+  'progress.range1y': '1 año',
+  'progress.rangeAll': 'Todo',
+  'progress.noLogsRange': 'Sin registros en este período.',
+  'progress.rangeDelta': 'en el período',
+  'progress.history': 'Historial',
 
   // Grupos musculares (IDs de Wger)
   'muscle.10': 'Abdominales',
@@ -649,6 +655,12 @@ const en = {
   'progress.viewAll': 'View all your progress',
   'progress.logCount': '{n} logs',
   'progress.logOne': '1 log',
+  'progress.range1m': '1 month',
+  'progress.range1y': '1 year',
+  'progress.rangeAll': 'All',
+  'progress.noLogsRange': 'No logs in this period.',
+  'progress.rangeDelta': 'in this period',
+  'progress.history': 'History',
 
   // Muscle groups (Wger IDs)
   'muscle.10': 'Abs',

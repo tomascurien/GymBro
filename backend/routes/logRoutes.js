@@ -164,7 +164,7 @@ router.get("/exercise/:exerciseId", authMiddleware, async (req, res) => {
     const logs = await ExerciseLog.findAll({
       where: { user_id: req.user.id, exercise_id: exerciseId },
       order: [['created_at', 'DESC']],
-      limit: 100,
+      limit: 500,
     });
     res.json(logs);
   } catch (error) {
