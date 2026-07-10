@@ -27,11 +27,18 @@ const bestWeekStreak = (logs) => {
 
 // Valores actuales del usuario para cada insignia
 const computeValues = async (userId) => {
-  const logs = await ExerciseLog.findAll({
-    where: { user_id: userId },
-    order: [['created_at', 'ASC']],
-    attributes: ['exercise_id', 'weight_kg', 'created_at'],
-  });
+  // Las tres consultas en paralelo: cada round trip a la DB cuesta caro
+  const [logs, myRoutines] = await Promise.all([
+    ExerciseLog.findAll({
+      where: { user_id: userId },
+      order: [['created_at', 'ASC']],
+      attributes: ['exercise_id', 'weight_kg', 'created_at'],
+    }),
+    Routine.findAll({ where: { user_id: userId }, attributes: ['id'] }),
+  ]);
+  const saves = myRoutines.length
+    ? await FavoriteRoutine.count({ where: { routine_id: { [Op.in]: myRoutines.map((r) => r.id) } } })
+    : 0;
 
   // PRs: registros que superaron el máximo previo del ejercicio (el primero no cuenta)
   // Progreso: mejor % de mejora (máximo histórico vs. primer registro) entre ejercicios
@@ -57,12 +64,6 @@ const computeValues = async (userId) => {
     }
   }
 
-  // Creador: cuántas veces guardaron mis rutinas
-  const myRoutines = await Routine.findAll({ where: { user_id: userId }, attributes: ['id'] });
-  const saves = myRoutines.length
-    ? await FavoriteRoutine.count({ where: { routine_id: { [Op.in]: myRoutines.map((r) => r.id) } } })
-    : 0;
-
   return {
     regularity: bestWeekStreak(logs),
     prs: prCount,
@@ -74,7 +75,12 @@ const computeValues = async (userId) => {
 // Calcula el estado de todas las insignias y persiste los niveles nuevos.
 // Devuelve [{ slug, tiers, value, tier, nextThreshold }]
 const getBadges = async (userId) => {
-  const values = await computeValues(userId);
+  // Valores + niveles ya persistidos, en paralelo
+  const [values, stored] = await Promise.all([
+    computeValues(userId),
+    UserBadge.findAll({ where: { user_id: userId }, attributes: ['badge_slug', 'tier'] }),
+  ]);
+  const storedSet = new Set(stored.map((b) => `${b.badge_slug}:${b.tier}`));
 
   const result = BADGES.map(({ slug, tiers }) => {
     const value = values[slug] || 0;
@@ -91,14 +97,18 @@ const getBadges = async (userId) => {
     };
   });
 
-  // Persistir niveles recién alcanzados (idempotente)
+  // Persistir SOLO los niveles nuevos, en una única query (en régimen
+  // estable no hay ninguno y esto no cuesta nada).
+  const missing = [];
   for (const b of result) {
     for (let t = 1; t <= b.tier; t++) {
-      await UserBadge.findOrCreate({
-        where: { user_id: userId, badge_slug: b.slug, tier: t },
-        defaults: { user_id: userId, badge_slug: b.slug, tier: t },
-      });
+      if (!storedSet.has(`${b.slug}:${t}`)) {
+        missing.push({ user_id: userId, badge_slug: b.slug, tier: t });
+      }
     }
+  }
+  if (missing.length) {
+    await UserBadge.bulkCreate(missing, { ignoreDuplicates: true });
   }
 
   return result;
